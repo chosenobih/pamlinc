@@ -4,7 +4,7 @@
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -t tophat -s star -q transcript_abundance_quantification -e evolinc_i -m HAMR"
+      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -t tophat -s star -q transcript_abundance_quantification -e evolinc_i -m HAMR"
       echo ""
 
 cat <<'EOF'
@@ -12,6 +12,7 @@ cat <<'EOF'
   ###### Command line options ##########
   -g <reference genome fasta file>
   -a <reference genome annotation>
+  -i <index_folder>
   -l library type #note that this is a lower case L
   -1 <reads_1>
                # Ends with R1 and is in the same order as reverse reads
@@ -23,7 +24,7 @@ cat <<'EOF'
   -p number of threads
   -q transcript abundance quantification
   -t tophat2 mapping #needed if you want to run HAMR
-  -s star mapping #deactivates HAMR
+  -s star mapping #deactivates tophat2 and HAMR
   -y type of reads (single end or paired end) #denoted as "SE" or "PE", include double quotation on command line
   -m HAMR
   -e evolinc_i
@@ -35,15 +36,17 @@ star=0
 tophat=0
 referencegenome=0
 referenceannotation=0
-transcript_abun_quant=0
 
-while getopts ":g:a:l:1:2:u:o:S:p:htsqem:y:" opt; do
+while getopts ":g:a:i:l:1:2:u:o:S:p:htsqem:y:" opt; do
   case $opt in
     g)
     referencegenome=$OPTARG # Reference genome file
      ;;
     a)
     referenceannotation=$OPTARG # Reference genome annotation
+     ;;
+    i)
+    index_folder=$OPTARG # Input folder
      ;;
     l)
     lib_type=$OPTARG # Library type
