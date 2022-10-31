@@ -13,6 +13,16 @@ bin-release/
 *.ipa
 *.apk
 
+*.gz
+*.sif
+*.jx
+*.json
+*.txt
+*.bam
+*.sam
+*.fa
+*.gff3
+
 # Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
