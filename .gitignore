@@ -20,7 +20,7 @@ bin-release/
 *.txt
 *.bam
 *.sam
-sbicolor.fa
+sbicolor*
 *.gff3
 *.gtf
 
