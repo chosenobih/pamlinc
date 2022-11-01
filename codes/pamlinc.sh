@@ -102,13 +102,14 @@ while getopts ":g:a:i:l:1:2:u:o:S:p:htsqem:y:" opt; do
   esac
 done
 
+# Create the output directory
+mkdir $pipeline_output
 
 paired_fastq_gz()
 {
- filename=$(basename "$f" ".fq.gz")
+ filename=$(basename "$f" ".fastq.gz")
     filename2=${filename/_R1/_R2}
     filename3=$(echo $filename | sed 's/_R1//')
-      mkdir $pipeline_output
         DIRECTORY=$pipeline_output/trimmomatic_out
           if [ ! -d "$DIRECTORY" ]; then
             mkdir $DIRECTORY
@@ -116,47 +117,13 @@ paired_fastq_gz()
         echo "Running trimommatic"
         echo "####################"
   if [ "$seq_type" == "PE" ]; then
-    echo "trimmomatic PE -thread $num_threads ${filename} ${filename2} ${filename}_forward_unpaired.fq.gz ${filename}_forward_paired.fq.gz ${filename2}_reverse_unpaired.fq.gz ${filename2}_reverse_paired.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3
-TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-    trimmomatic PE -thread $num_threads ${filename} ${filename2} ${filename}_forward_unpaired.fq.gz ${filename}_forward_paired.fq.gz ${filename2}_reverse_unpaired.fq.gz ${filename2}_reverse_paired.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3
-TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
-    mv *_forward_paired *_forward_unpaired *_reverse_paired *_reverse_unpaired $DIRECTORY
+    echo "trimmomatic PE -threads $num_threads -trimlog ${filename3}_trimlog.txt ${filename} ${filename2} ${filename3}_1P.fq.gz ${filename3}_1U.fq.gz ${filename3}_2P.fq.gz ${filename3}_2U.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+    trimmomatic PE -threads $num_threads -trimlog ${filename3}_trimlog.txt ${filename} ${filename2} ${filename3}_1P.fq.gz ${filename3}_1U.fq.gz ${filename3}_2P.fq.gz ${filename3}_2U.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+    mv *_1P* *_1U* *_2P* *_2U* *trimlog* $DIRECTORY
         fi
   fi
 }
 
-# ############################################################################################################################################################################################################################
-# # Reference genome/Index ###
-# ############################################################################################################################################################################################################################
-
-if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
-  if [ ! -z "$index_folder" ]; then
-    for i in $index_folder/*; do
-        cp $i .
-        fbname=$(basename "$i" .bt2 | cut -d. -f1)
-    done
-  elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
-    echo "##########################################"
-    echo "Building reference genome index for Tophat"
-    echo "##########################################"
-    echo "bowtie2-build -f $referencegenome ref_genome --threads $num_threads"
-    bowtie2-build -f $referencegenome ref_genome --threads $num_threads
-    echo "fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)"
-    fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)
-  fi
-elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
-  if [ ! -z "$index_folder" ]; then
-    for i in $index_folder/*; do
-        cp $i -r .
-    done
-  elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
-    echo "########################################"
-    echo "Building reference genome index for STAR"
-    echo "########################################"
-    echo "STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13"
-    STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13
-  fi
-fi
 
 # ############################################################################################################################################################################################################################
 # # Check that the input fastq files has the appropriate extension and then trim reads, align the reads to the reference genome, quantify transcript abundance, identify RNA Mod. and LincRNA
@@ -182,7 +149,7 @@ if [ ! -z "$left_reads" ] && [ ! -z "$right_reads" ]; then
         exit 64
       fi 
     done
-   
+ fi  
 
 
 
