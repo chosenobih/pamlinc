@@ -118,61 +118,9 @@ paired_fastq_gz()
     filename=$(basename "$f" ".fastq.gz")
     filename2=${filename/_R1/_R2}
     filename3=$(echo $filename | sed 's/_R1//')
-      if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
-          echo "###################################"
-          echo "Running tophat2 in paired end mode"
-          echo "###################################"
-          if [ "$seq_type" == "PE" ]; then
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation ref_genome ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
-          tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation ref_genome ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz"
-          tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz
-         
-          echo "#######################"
-          echo "Converting .bam to .sam"
-          echo "#######################"
-          echo "samtools view -h -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted.bam"
-          samtools view -h -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted.bam
-          echo "samtools view -h -o ${filename3}_rev.sam ${filename3}_rev_tophat/accepted.bam"
-          samtools view -h -o ${filename3}_rev.sam ${filename3}_rev_tophat/accepted.bam
-         
-          echo "#######################"
-          echo "Grepping unique reads"
-          echo "#######################"
-          echo "grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam"
-          grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam
-          echo "grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam"
-          grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam
-         
-          echo "######################################################"
-          echo "Converting .sam to .bam before running samtools sort"
-          echo "######################################################"
-          echo "samtools view -bSh ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam"
-          samtools view -bSh ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam
-          echo "samtools view -bSh ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam"
-          samtools view -bSh ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam
-         
-          echo "#######################"
-          echo "Sort unique reads"
-          echo "#######################"
-          echo "samtools sort ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam"
-          samtools sort ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam
-          echo "samtools sort ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam"
-          samtools sort ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam
-         
-          echo "########################"
-          echo "Merge fwd and rev reads"
-          echo "########################"
-          echo "samtools merge ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam"
-          samtools merge ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
-          fi
-      fi
-    elif [ "$tophat" !== 0 ] && [ "$star" = 0 ]; then
-      if [ "$seq_type" == "PE" ]; then
-          echo "################################"
-          echo "Running STAR in paired-end mode"
-          echo "################################"
-          echo "STAR "
+
+      echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
+      java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
 }
 
 
@@ -201,8 +149,6 @@ if [ ! -z "$left_reads" ] && [ ! -z "$right_reads" ]; then
       fi 
     done
  fi  
-
-
 
 
 ######### End ########
