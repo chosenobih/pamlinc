@@ -119,14 +119,13 @@ paired_fastq_gz()
     filename2=${filename/_R1/_R2}
     filename3=$(echo $filename | sed 's/_R1//')
 
-      if [ "$evolinc_i" != 0 ]; then
+      if [ "$transcript_abun_quant" != 0 ]; then
       echo "###########################################################################"
-      echo "Converting .bam file(s) containing uniquely mapped and sorted reads to .gtf"
-      echo "###########################################################################"
-        if [ "$lib_type" == fr-secondstrand ]; then      
-        echo "stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr"
-        stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr
-        elif [ "$lib_type" == fr-firststrand ]; then
+      echo "Running salmon and featureCounts to quantify transcript"
+      echo "###########################################################################"    
+        echo "salmon quant -l A -a ${filename3}_merged.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads"
+        salmon quant -l A -a ${filename3}_merged.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads
+
         echo "stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf"
         stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf
         fi
