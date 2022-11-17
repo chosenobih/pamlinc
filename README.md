@@ -1,4 +1,4 @@
-# PAMLINC: High-throughput Distributed Computing Pipeline for Processing and Analyzing RNA-Seq Data
+# PAMLINC: Paralel Annotation of Modified RNA and LincRNA
 
 ## Introdcution
 
