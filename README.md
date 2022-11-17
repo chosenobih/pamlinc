@@ -1,4 +1,4 @@
-# PAMLINC: Paralel Annotation of Modified RNA and LincRNA
+# PAMLINC: Parallel Annotation of Modified RNA and LincRNA
 
 ## Introduction
 
