@@ -1,6 +1,6 @@
 # PAMLINC: Paralel Annotation of Modified RNA and LincRNA
 
-## Introdcution
+## Introduction
 
 * PAMLINC is a workflow for processing raw RNA-Seq illumina data for rapid quantification of transcript abundance, RNA modifications and Long non-coding Intergenic ribonucleotides (lincRNA).
 * PMALINC can process raw FASTQ files containing either paired-end or single-end reads. It can also process seuqnece read archive (SRA) from NCBI using a SRA ID.
