@@ -12,19 +12,30 @@
 
 Pipeline programs and version
 -----------------------------
-| Command Line  | Description    |
+| Command Line  | Description                                                                                                 |
   Argument
-| ------------- |:-------------:|
-|               |           |
-| TopHat2       |          |
-| Samtools      |           |
-| Picard        |         |
-| Gakt          |          |
-| HAMR          |            |
-| Evolinc-i     |          |
-| Salmon        |          |
-| subread       |          |
-| sra-tools     |            |
+| ------------- |:-----------------------------------------------------------------------------------------------------------:|
+| -g            | reference genome fasta file                                                                                 |
+| -a            | reference genome annotation file                                                                            |
+| -A            | reference genome annotation file type ("GTF" or "GFF3" supported. Include double quotation on command line) |
+| -i            | index folder                                                                                                |
+| -l            | library type  (library type can be fr-unstranded, fr-firststrand or fr-secondstrand)                        |
+| -1            | read_1                                                                                                      |
+| -2            | read_2                                                                                                      |
+| -u            | single_reads                                                                                                |
+| -o            | output directory                                                                                            |
+| -S            | NCBI SRA-ID                                                                                                 |
+| -p            | number of threads                                                                                           |
+| -q            | activate transcript abundance quantification option                                                         |
+| -t            | selects tophat2 as aligner of choice                                                                        |
+| -s            | selects STAR as aligner of choice                                                                           |
+| -y            | type of read (single end or paired end) #denoted as "SE" or "PE", include double quotation on command line  |
+| -b            | reads_mismatches (% reads mismatches to allow)                                                              |
+| -m            | activates RNA modification annotation option                                                                |
+| -e            | activate lincRNA annotation option                                                                          |
+| -k            | feature_type #Feature type (Default is exon)                                                                |
+| -r            | gene attribute (Default is gene_id)                                                                         |
+| -n            | strandedness (Default is 0 (unstranded), 1 (stranded), 2 (reversely stranded)                               |
 
 Required dependecies
 --------------------
