@@ -3,8 +3,7 @@
 ## Introduction
 
 * PAMLINC is a workflow for processing raw RNA-Seq illumina data for rapid quantification of transcript abundance, RNA modifications and Long non-coding Intergenic ribonucleotides (lincRNA).
-* PMALINC can process raw FASTQ files containing either paired-end or single-end reads. It can also process seuqnece read archive (SRA) from NCBI using a SRA ID.
-* PAMLINC supports two reads aligner options: tophat2 and STAR but we recommend that users who are interested in using PAMLINC to annotate RNA modification annotation select tophat2 as the aligner of choice.
+* PMALINC can process raw FASTQ files containing either paired-end or single-end reads. It can also process sequence read archive (SRA) from NCBI using a SRA ID. PAMLINC supports two reads aligner options: tophat2 and STAR but we recommend that users who are interested in using PAMLINC to annotate RNA modification select tophat2 as the aligner of choice due to alignment alogirthms compatibility.
 * PAMLINC minimally requires the following input data:
   1. Reference genome (FASTA)
   2. Reference annotation (GTF/GFF3)
