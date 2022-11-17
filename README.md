@@ -13,7 +13,7 @@
 Pipeline programs and version
 -----------------------------
 | Command Line  | Description                                                                                                 |
-  Argument
+|  Argument     |                                                                                                             |
 | ------------- |:-----------------------------------------------------------------------------------------------------------:|
 | -g            | reference genome fasta file                                                                                 |
 | -a            | reference genome annotation file                                                                            |
