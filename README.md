@@ -10,10 +10,9 @@
   2. Reference annotation (GTF/GFF3)
   3. RNA-Seq reads (FASTQ) - Paired end or Single end or NCBI SRA ID.
 
-Pipeline programs and version
------------------------------
-| Command Line  | Description                                                                                                 |
-|  Argument     |                                                                                                             |
+PAMLINC command line arguments and description
+----------------------------------------------
+| Argument      | Description                                                                                                 |
 | ------------- |:-----------------------------------------------------------------------------------------------------------:|
 | -g            | reference genome fasta file                                                                                 |
 | -a            | reference genome annotation file                                                                            |
