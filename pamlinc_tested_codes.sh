@@ -78,7 +78,7 @@ while getopts ":g:a:i:l:1:2:u:o:S:p:d:htsqem:k:r:n:y:" opt; do
     num_threads=$OPTARG # Number of threads
      ;;
     d)
-    reads_mismatches=$OPTARG # Number of threads
+    reads_mismatches=$OPTARG # Number of mismatches to allow in tophat2 run
      ;;
     q)
     transcript_abun_quant=$OPTARG # transcript abundance quantification
@@ -121,6 +121,17 @@ while getopts ":g:a:i:l:1:2:u:o:S:p:d:htsqem:k:r:n:y:" opt; do
       ;;
   esac
 done
+
+
+###################################################################################################################
+# # Check annotation file type and convert to .gtf if .gff file was supplied
+###################################################################################################################
+if (grep -q -E 'transcript_id | gene_id' $referenceannotation); then
+    echo "$referenceannotation is in .gtf format"
+    else
+    gffread $referenceannotation -T -o ref_annotation.gtf
+    $referenceannotation=$'ref_annotation.gtf'
+fi
 
 
 ###################################################################################################################
@@ -285,7 +296,7 @@ if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
   if [ ! -z "$index_folder" ]; then
     for i in $index_folder/*; do
         mv $i -f .
-        fbname=$(basename "$i" .bt2 | cut -d. -f1)
+        =$(basename "$i" .bt2 | cut -d. -f1)
     done
   elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
     echo "##########################################"
