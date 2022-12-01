@@ -33,6 +33,7 @@ cat <<'EOF'
   -k feature_type #Feature type (Default is exon)
   -r gene attribute (Default is gene_id)
   -n strandedness (Default is 0 (unstranded), 1 (stranded), 2 (reversely stranded)
+  -z type of container (docker or singularity) #denoted as "D" or "S", include double quotation on command line
 EOF
     exit 0
 }
@@ -106,7 +107,10 @@ while getopts ":g:a:i:l:1:2:u:o:S:p:d:htsqem:k:r:n:y:" opt; do
     ;;
     y)
     seq_type=$OPTARG # Type of Sequence data (SE or PE. Mainly needed for SRA and featurecounts)
-     ;;
+    ;;
+     z)
+    container_type=$OPTARG # Type of container ("D" or "S". Option is required when running pamlinc as a container)
+    ;;
     h)
     usage
      exit 1
