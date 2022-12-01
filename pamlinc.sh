@@ -4,7 +4,7 @@
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -A <reference_annotation type> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -q transcript_abundance_quantification -e evolinc_i -m HAMR -r <gene_attribute> -n <strandedness> -k <feature_type>"
+      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -A <reference_annotation type> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -q transcript_abundance_quantification -e evolinc_i -m HAMR -r <gene_attribute> -n <strandedness> -k <feature_type> -z <type of container>"
       echo ""
 
 cat <<'EOF'
@@ -33,6 +33,7 @@ cat <<'EOF'
   -k feature_type #Feature type (Default is exon)
   -r gene attribute (Default is gene_id)
   -n strandedness (Default is 0 (unstranded), 1 (stranded), 2 (reversely stranded)
+  -z type of container (docker or singularity) #denoted as "D" or "S", include double quotation on command line
 EOF
     exit 0
 }
@@ -42,7 +43,7 @@ tophat=0
 referencegenome=0
 referenceannotation=0
 
-while getopts ":g:a:i:l:1:2:u:o:S:p:d:htsqem:k:r:n:y:" opt; do
+while getopts ":g:a:i:l:1:2:u:o:S:p:d:htsqem:k:r:n:y:z:" opt; do
   case $opt in
     g)
     referencegenome=$OPTARG # Reference genome file
@@ -103,9 +104,12 @@ while getopts ":g:a:i:l:1:2:u:o:S:p:d:htsqem:k:r:n:y:" opt; do
      ;;
     n)
     strandedness=$OPTARG # (Default is 0 (unstranded), 1 (stranded), 2 (reversely stranded))
-    ;;
+     ;;
     y)
-    seq_type=$OPTARG # Type of Sequence data (SE or PE. Mainly needed for SRA and featurecounts)
+    seq_type=$OPTARG # Type of Sequence data (SE or PE. Needed for SRA and featurecounts)
+     ;;
+    z)
+    container_type=$OPTARG # Type of container ("D" or "S". Option is required when running pamlinc as a container)
      ;;
     h)
     usage
@@ -130,16 +134,33 @@ if [ ! -d "$pipeline_output" ]; then
 fi
 
 ###################################################################################################################
-# # Check annotation file type and convert to .gtf if .gff file was supplied
+# # Check reference genome annotation file type and convert to .gtf if .gff file was supplied by user.
 ###################################################################################################################
 if (grep -q -E 'transcript_id | gene_id' $referenceannotation); then
     echo "$referenceannotation is in .gtf format"
     else
     gffread $referenceannotation -T -o ref_annotation.gtf
-    $referenceannotation=ref_annotation.gtf
+    referenceannotation=ref_annotation.gtf
 fi
 
-STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13
+###################################################################################################################
+# # Pull required images for HAMR, EVOLINC-I and GATK
+###################################################################################################################
+if [ "$container_type" == "D" ]; then
+echo "###################################################"
+echo "Pulling docker images for HAMR, EVOLINC-I and GATK"
+echo "###################################################"
+    docker pull reetututeja/hamr_xi:1.4
+    docker pull evolinc/evolinc-i:1.7.5
+    docker pull broadinstitute/gatk3:3.5-0
+elif [ "$container_type" == "S" ]; then
+echo "########################################################"
+echo "Pulling singularity images for HAMR, EVOLINC-I and GATK"
+echo "########################################################"
+    singularity pull docker://reetututeja/hamr_xi:1.4
+    singularity pull docker://evolinc/evolinc-i:1.7.5
+    singularity pull docker://broadinstitute/gatk3:3.5-0
+fi
 
 paired_fastq_gz()
 {

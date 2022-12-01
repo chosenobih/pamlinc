@@ -124,15 +124,33 @@ done
 
 
 ###################################################################################################################
-# # Check annotation file type and convert to .gtf if .gff file was supplied
+# # Check reference genome annotation file type and convert to .gtf if .gff file was supplied by user.
 ###################################################################################################################
 if (grep -q -E 'transcript_id | gene_id' $referenceannotation); then
     echo "$referenceannotation is in .gtf format"
     else
     gffread $referenceannotation -T -o ref_annotation.gtf
-    $referenceannotation=$'ref_annotation.gtf'
+    referenceannotation=ref_annotation.gtf
 fi
 
+###################################################################################################################
+# # Pull required images for HAMR, EVOLINC-I and GATK
+###################################################################################################################
+if [ "$container_type" == "D" ]; then
+echo "###################################################"
+echo "Pulling docker images for HAMR, EVOLINC-I and GATK"
+echo "###################################################"
+    docker pull reetututeja/hamr_xi:1.4
+    docker pull evolinc/evolinc-i:1.7.5
+    docker pull broadinstitute/gatk3:3.5-0
+elif [ "$container_type" == "S" ]; then
+echo "########################################################"
+echo "Pulling singularity images for HAMR, EVOLINC-I and GATK"
+echo "########################################################"
+    singularity pull docker://reetututeja/hamr_xi:1.4
+    singularity pull docker://evolinc/evolinc-i:1.7.5
+    singularity pull docker://broadinstitute/gatk3:3.5-0
+fi
 
 ###################################################################################################################
 # # House keeping - move files into output directory
