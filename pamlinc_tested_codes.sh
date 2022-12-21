@@ -161,11 +161,11 @@ fi
 ###################################################################################################################
 
 #### Trimmomatic
-        DIRECTORY=$pipeline_output/trimmomatic_out
-        if [ ! -d "$DIRECTORY" ]; then
-            mkdir $DIRECTORY
-          mv *_1P* *_1U* *_2P* *_2U* *trimlog* $DIRECTORY
-	fi
+#        DIRECTORY=$pipeline_output/trimmomatic_out
+#        if [ ! -d "$DIRECTORY" ]; then
+#            mkdir $DIRECTORY
+#          mv *_1P* *_1U* *_2P* *_2U* *trimlog* $DIRECTORY
+#	fi
 	
 ##################################################################################################################
 # # Transcript abundance quantification
@@ -182,11 +182,11 @@ transcript_quantification()
         salmon quant -l A -a ${filename3}_merged.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads
         echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
         featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam
-        elif [ "$seq_type" == "SE" ]; then
+        #elif [ "$seq_type" == "SE" ]; then
         #echo "salmon quant -l A -a ${filename3}.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads"
         #salmon quant -l A -a ${filename3}.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads
-        echo "featureCounts -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}.bam"
-        featureCounts -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}.bam
+        #echo "featureCounts -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
+        #featureCounts -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam
         fi 
       fi
 }
@@ -218,7 +218,7 @@ transcript_quantification()
         singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
         fi
       fi
-{
+}
 
 ############################################################################################################################################################################################################################
 # # Trimmming, Mapping and greppiung unique reads 
@@ -247,9 +247,9 @@ paired_fastq_gz()
           echo "###################################"
           
           if [ "$seq_type" == "PE" ]; then
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation ref_genome ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
           tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation ref_genome ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz"
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz"
           tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz
          
         
@@ -291,7 +291,7 @@ paired_fastq_gz()
           echo "samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam"
           samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
 
-	  echo "######################################################"
+	        echo "######################################################"
           echo "Resolving spliced alignments"
           echo "######################################################"
           echo "picard AddOrReplaceReadGroups I=${filename3}_merged.bam O=${filename3}_RG.bam ID=${filename3} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename3}"
@@ -301,16 +301,20 @@ paired_fastq_gz()
           echo "samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai"
           samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai
           echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-          java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
+          singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
 	  
-	  echo "######################################################"
+	        echo "######################################################"
           echo "Running HAMR"
           echo "######################################################"
-	  echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
-	  singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
+	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+	        lincRNA_annotation
+	        transcript_quantification
+          fi
+          fi
 }
 
- ############################################################################################################################################################################################################################
+#############################################################################################################################################################################################################################
 # # Check if user supplied index folder for salmon, bowtie2 and star indexes. Build the indexes if not supplied.
 #############################################################################################################################################################################################################################
 
@@ -318,14 +322,14 @@ if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
   if [ ! -z "$index_folder" ]; then
     for i in $index_folder/*; do
         mv $i -f .
-        =$(basename "$i" .bt2 | cut -d. -f1)
+        fbname=$(basename "$i" .bt2 | cut -d. -f1)
     done
   elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
     echo "##########################################"
     echo "Building reference genome index for Tophat"
     echo "##########################################"
-    echo "bowtie2-build -f $referencegenome ref_genome --threads $num_threads"
-    bowtie2-build -f $referencegenome ref_genome --threads $num_threads
+    echo "bowtie2-build --threads -f $referencegenome ref_genome"
+    bowtie2-build -f $referencegenome ref_genome
     echo "fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)"
     fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)
   fi
@@ -347,14 +351,14 @@ if [ "$transcript_abun_quant" != 0 ]; then
   if [ ! -z "$index_folder" ]; then
     for i in $index_folder/*; do
         mv $i -f .
-        fbname=$(basename "$i" . | cut -d. f1)
     done
   elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
   echo "####################################"
   echo "Building reference genome for salmon"
   echo "####################################"
-  echo "salmon index -i salmon_index -t $referencegenome"
-  salmon index -i salmon_index -t $referencegenome
+  echo "salmon index -i salmon_index -t $referenceannotation"
+  salmon index -i salmon_index -t $referenceannotation
+  fi
 fi
  ############################################################################################################################################################################################################################
 # # Check that the input fastq files has the appropriate extension and then trim reads, align the reads to the reference genome, quantify transcript abundance, identify RNA Mod. and LincRNA
@@ -380,4 +384,5 @@ if [ ! -z "$left_reads" ] && [ ! -z "$right_reads" ]; then
         exit 64
       fi 
     done
- fi  
+fi
+######### End ########

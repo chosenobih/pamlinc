@@ -143,25 +143,6 @@ if (grep -q -E 'transcript_id | gene_id' $referenceannotation); then
     referenceannotation=ref_annotation.gtf
 fi
 
-###################################################################################################################
-# # Pull required images for HAMR, EVOLINC-I and GATK
-###################################################################################################################
-if [ "$container_type" == "D" ]; then
-echo "###################################################"
-echo "Pulling docker images for HAMR, EVOLINC-I and GATK"
-echo "###################################################"
-    docker pull reetututeja/hamr_xi:1.4
-    docker pull evolinc/evolinc-i:1.7.5
-    docker pull broadinstitute/gatk3:3.5-0
-elif [ "$container_type" == "S" ]; then
-echo "########################################################"
-echo "Pulling singularity images for HAMR, EVOLINC-I and GATK"
-echo "########################################################"
-    singularity pull docker://reetututeja/hamr_xi:1.4
-    singularity pull docker://evolinc/evolinc-i:1.7.5
-    singularity pull docker://broadinstitute/gatk3:3.5-0
-fi
-
 paired_fastq_gz()
 {
     filename=$(basename "$f" ".fastq.gz")
@@ -171,7 +152,46 @@ paired_fastq_gz()
 
 }
 
+#############################################################################################################################################################################################################################
+# # Check if user supplied index folder for salmon, bowtie2 and star indexes. Build the indexes if not supplied.
+#############################################################################################################################################################################################################################
 
+if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
+  if [ ! -z "$index_folder" ]; then
+      mv -f $index_folder/*bt2l .
+      fbname=$(basename "$i" .bt2l | cut -d. -f1)
+  elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
+    echo "##########################################"
+    echo "Building reference genome index for Tophat"
+    echo "##########################################"
+    echo "bowtie2-build --threads -f $referencegenome ref_genome"
+    bowtie2-build -f $referencegenome ref_genome
+    echo "fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)"
+    fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)
+  fi
+elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
+  if [ ! -z "$index_folder" ]; then
+      mv -f $index_folder/star_index/ .
+  elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
+    echo "########################################"
+    echo "Building reference genome index for STAR"
+    echo "########################################"
+    echo "STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13"
+    STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13
+  fi
+fi
+
+if [ "$transcript_abun_quant" != 0 ]; then
+  if [ ! -z "$index_folder" ]; then
+      mv -f $index_folder/salmon_index/ .
+  elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
+  echo "####################################"
+  echo "Building reference genome for salmon"
+  echo "####################################"
+  echo "salmon index -i salmon_index -t $referenceannotation"
+  salmon index -t $referenceannotation -i salmon_index
+  fi
+fi
 # ############################################################################################################################################################################################################################
 # # Check that the input fastq files has the appropriate extension and then trim reads, align the reads to the reference genome, quantify transcript abundance, identify RNA Mod. and LincRNA
 # ############################################################################################################################################################################################################################
@@ -196,6 +216,6 @@ if [ ! -z "$left_reads" ] && [ ! -z "$right_reads" ]; then
         exit 64
       fi 
     done
- fi  
+ fi
 
 ######### End ########
