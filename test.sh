@@ -4,7 +4,7 @@
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -A <reference_annotation type> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -q transcript_abundance_quantification -e evolinc_i -m HAMR -r gene_attribute -n strandedness -k feature_type"
+      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -A <reference_transcriptome> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -q transcript_abundance_quantification -e evolinc_i -m HAMR -r gene_attribute -n strandedness -k feature_type"
       echo ""
 
 cat <<'EOF'
@@ -12,7 +12,7 @@ cat <<'EOF'
   ###### Command line options ##########
   -g <reference genome fasta file>
   -a <reference genome annotation>
-  -A <ref_annot type> ("GTF" or "GFF3" supported include double quotation on command line)
+  -A <reference_transcriptome>
   -i <index_folder>
   -l library type #note that this is a lower case L
   -1 <reads_1>
@@ -41,8 +41,9 @@ star=0
 tophat=0
 referencegenome=0
 referenceannotation=0
+transcriptome=0
 
-while getopts ":g:a:i:l:1:2:u:o:S:p:d:k:r:n:htsqemy:" opt; do
+while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:r:n:htsqemy:" opt; do
   case $opt in
     g)
     referencegenome=$OPTARG # Reference genome file
@@ -51,7 +52,7 @@ while getopts ":g:a:i:l:1:2:u:o:S:p:d:k:r:n:htsqemy:" opt; do
     referenceannotation=$OPTARG # Reference genome annotation
      ;;
     A)
-    ref_annot_type=$OPTARG # Reference genome annotation type (GTF or GFF3 supported)
+    transcriptome=$OPTARG # Reference genome transcriptome (transcript.fa)
      ;;
     i)
     index_folder=$OPTARG # Input folder

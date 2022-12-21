@@ -4,7 +4,7 @@
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -A <reference_annotation type> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -q transcript_abundance_quantification -e evolinc_i -m HAMR -r <gene_attribute> -n <strandedness> -k <feature_type> -z <type of container>"
+      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -A <reference_transcriptome> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -q transcript_abundance_quantification -e evolinc_i -m HAMR -r gene_attribute -n strandedness -k feature_type"
       echo ""
 
 cat <<'EOF'
@@ -12,7 +12,7 @@ cat <<'EOF'
   ###### Command line options ##########
   -g <reference genome fasta file>
   -a <reference genome annotation>
-  -A <ref_annot type> ("GTF" or "GFF3" supported include double quotation on command line)
+  -A <reference_transcriptome>
   -i <index_folder>
   -l library type #note that this is a lower case L
   -1 <reads_1>
@@ -27,13 +27,12 @@ cat <<'EOF'
   -t tophat2 mapping #needed if you want to run HAMR
   -s star mapping #deactivates tophat2 and HAMR
   -y type of reads (single end or paired end) #denoted as "SE" or "PE", include double quotation on command line
-  -b reads_mismatches (% reads mismatches to allow. Needed for tophat2)
+  -d reads_mismatches (% reads mismatches to allow. Needed for tophat2)
   -m HAMR
   -e evolinc_i
-  -k feature_type #Feature type (Default is exon)
+  -k feature type #Feature type (Default is exon)
   -r gene attribute (Default is gene_id)
   -n strandedness (Default is 0 (unstranded), 1 (stranded), 2 (reversely stranded)
-  -z type of container (docker or singularity) #denoted as "D" or "S", include double quotation on command line
 EOF
     exit 0
 }
@@ -42,8 +41,9 @@ star=0
 tophat=0
 referencegenome=0
 referenceannotation=0
+transcriptome=0
 
-while getopts ":g:a:i:l:1:2:u:o:S:p:d:htsqem:k:r:n:y:z:" opt; do
+while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:r:n:htsqemy:" opt; do
   case $opt in
     g)
     referencegenome=$OPTARG # Reference genome file
@@ -52,7 +52,7 @@ while getopts ":g:a:i:l:1:2:u:o:S:p:d:htsqem:k:r:n:y:z:" opt; do
     referenceannotation=$OPTARG # Reference genome annotation
      ;;
     A)
-    ref_annot_type=$OPTARG # Reference genome annotation type (GTF or GFF3 supported)
+    transcriptome=$OPTARG # Reference genome transcriptome (transcript.fa)
      ;;
     i)
     index_folder=$OPTARG # Input folder
@@ -76,7 +76,7 @@ while getopts ":g:a:i:l:1:2:u:o:S:p:d:htsqem:k:r:n:y:z:" opt; do
     sra_id=$OPTARG # SRA ID or SRA ID's in a file
      ;;
     p)
-     num_threads=$OPTARG # Number of threads
+    num_threads=$OPTARG # Number of threads
      ;;
     d)
     reads_mismatches=$OPTARG # Number of mismatches to allow in tophat2 run
@@ -106,10 +106,7 @@ while getopts ":g:a:i:l:1:2:u:o:S:p:d:htsqem:k:r:n:y:z:" opt; do
     strandedness=$OPTARG # (Default is 0 (unstranded), 1 (stranded), 2 (reversely stranded))
      ;;
     y)
-    seq_type=$OPTARG # Type of Sequence data (SE or PE. Needed for SRA and featurecounts)
-     ;;
-    z)
-    container_type=$OPTARG # Type of container ("D" or "S". Option is required when running pamlinc as a container)
+    seq_type=$OPTARG # Type of Sequence data (SE or PE. Mainly needed for SRA and featurecounts)
      ;;
     h)
     usage
