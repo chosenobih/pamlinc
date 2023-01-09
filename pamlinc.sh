@@ -4,7 +4,7 @@
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -A <reference_transcriptome> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -q transcript_abundance_quantification -e evolinc_i -m HAMR -r gene_attribute -n strandedness -k feature_type"
+      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -A <reference_transcriptome> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -c sjdbOverhang -f genomeSAindexNbases -q transcript_abundance_quantification -e evolinc_i -m HAMR -r gene_attribute -n strandedness -k feature_type"
       echo ""
 
 cat <<'EOF'
@@ -26,6 +26,8 @@ cat <<'EOF'
   -q transcript abundance quantification
   -t tophat2 mapping #needed if you want to run HAMR
   -s star mapping #deactivates tophat2 and HAMR
+  -c sjdbOverhang #value is dependent on the read length of your fastq files (read length minus 1)
+  -f genomeSAindexNbases #default value is 14 but it should be scaled downed for small genomes, with a typical value of min(14, log2(GenomeLength)/2 - 1)
   -y type of reads (single end or paired end) #denoted as "SE" or "PE", include double quotation on command line
   -d reads_mismatches (% reads mismatches to allow. Needed for tophat2)
   -m HAMR
@@ -92,6 +94,12 @@ while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:r:n:htsqemy:" opt; do
      ;;
     s)
     star=$OPTARG # star
+     ;;
+    c)
+    sjdbOverhang=$OPTARG # need for star genome index building. Value is dependent on the read length of your fastq files (read length minus 1)
+     ;;
+    f)
+    genomeSAindexNbases=$OPTARG # needed for star genome index building. Default value is 14 but it should be scaled downed for small genomes, with a typical value of min(14, log2(GenomeLength)/2 - 1)
      ;;
     t)
     tophat=$OPTARG # tophat
@@ -185,8 +193,8 @@ if [ "$transcript_abun_quant" != 0 ]; then
   echo "####################################"
   echo "Building reference genome for salmon"
   echo "####################################"
-  echo "salmon index -i salmon_index -t $referenceannotation"
-  salmon index -t $referenceannotation -i salmon_index
+  echo "salmon index -i salmon_index -t $transcriptome"
+  salmon index -t $transcriptome -i salmon_index
   fi
 fi
 # ############################################################################################################################################################################################################################
