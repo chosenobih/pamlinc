@@ -156,15 +156,57 @@ singularity pull docker://ncbi/sra-tools:3.0.0
 singularity pull docker://biocontainers/bowtie2:v2.4.1_cv1
 
 ###################################################################################################################
-# # House keeping - move files into output directory
+# # pipeline house keeping - move output files into user input directory
 ###################################################################################################################
 
-#### Trimmomatic
-#        DIRECTORY=$pipeline_output/trimmomatic_out
-#        if [ ! -d "$DIRECTORY" ]; then
-#            mkdir $DIRECTORY
-#          mv *_1P* *_1U* *_2P* *_2U* *trimlog* $DIRECTORY
-#	fi
+house_keeping()
+{
+    if [! grep -q -E 'transcript_id | gene_id' $referenceannotation]; then
+         rm ref_annotation*
+    fi
+    dir=$pipeline_output/intermediate_files
+        if [ ! -d "$dir" ]; then
+            mkdir $dir
+        fi
+    if [ ! -z "$index_folder" ]; then
+        mv $fbname* $index_folder
+        mv star_index $index_folder
+        mv $index_folder "$pipeline_output"
+    elif [ -z "$index_folder" ]; then
+        mkdir index
+        mv $fbname* index
+        mv star_index "$pipeline_output"
+    fi
+    if [ "$transcript_abun_quant" != 0 ]; then
+        mkdir transcript_abundance_quantification
+        mv *_salmon transcript_abundance_quantification
+        mkdir Feature_counts && mv *_featurecounts.txt* Feature_counts
+        mv Feature_counts transcript_abundance_quantification
+        mv transcript_abundance_quantification "$pipeline_output"
+    fi
+    if [ "$evolinc_i" != 0 ]; then
+        rm *.loci *.stats *.tracking
+        mv *_lincRNA "$pipeline_output"
+    fi
+    if [ "$HAMR" != 0 ]; then
+        mv *_HAMR "$pipeline_out"
+        mv *.bai $dir
+    fi
+    if [ "$tophat" != 0 ]; then
+        mv *_tophat $dir
+    fi
+  
+  mkdir trimmomatic
+  mv *_1P* *_1U* *_2P* *_2U* *trimlog* *_trimmed.* trimmomatic
+  mv trimmomatic $dir
+  mv *.bam $dir
+  mv *.sam $dir
+  mv *.gtf $dir
+  rm *.sif
+  echo "##############################"
+  echo "Pipeline executed successfully"
+  echo "##############################"
+}
 	
 ##################################################################################################################
 # # Transcript abundance quantification
@@ -244,34 +286,34 @@ tophat_mapping_lincRNA_annotation()
         if [ "$seq_type" == "PE" ]; then
             if [ "$lib_type" == fr-secondstrand ]; then      
             echo "stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr"
-            #stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr
+            stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr
             echo "cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
-            #cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
+            cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
             echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
-            #singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
+            singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
             elif [ "$lib_type" == fr-firststrand ]; then
             echo "stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf"
-            #stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf
+            stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf
             echo "cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
-            #cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
+            cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
             echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
-            #singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
+            singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
             fi   
         elif [ "$seq_type" == "SE" ]; then
             if [ "$lib_type" == fr-secondstrand ]; then      
             echo "stringtie ${filename3}.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --fr"
-            #stringtie ${filename3}.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --fr
+            stringtie ${filename3}.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --fr
             echo "cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
-            #cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
+            cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
             echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
-            #singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
+            singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
             elif [ "$lib_type" == fr-firststrand ]; then
             echo "stringtie ${filename3}.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --rf"
-            #stringtie ${filename3}.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --rf
+            stringtie ${filename3}.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --rf
             echo "cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
-            #cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
+            cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
             echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
-            #singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
+            singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
             fi
         fi
       fi
@@ -433,7 +475,7 @@ paired_fq_gz()
           echo "########################"
           echo "samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam"
           #samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
-
+          if [ "$HAMR" != 0 ]; then
 	        echo "######################################################"
           echo "Resolving spliced alignments"
           echo "######################################################"
@@ -451,6 +493,7 @@ paired_fq_gz()
           echo "######################################################"
 	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
 	        #singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+          fi
           #tophat_mapping_lincRNA_annotation
 	        #tophat_mapping_transcript_quantification
           fi
@@ -464,6 +507,7 @@ paired_fq_gz()
               STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index_2 --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq.gz ${filename3}_2P.fq.gz
               fi
           fi
+          house_keeping
 }
 
 paired_fastq_gz()
@@ -488,16 +532,16 @@ paired_fastq_gz()
           
           if [ "$seq_type" == "PE" ]; then
           echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
-          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
+          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
           echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz"
-          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz
+          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz
          
         
           echo "########################"
           echo "Converting .bam to .sam"
           echo "########################"
           echo "samtools view -h -@ $num_threads -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted_hits.bam"
-          #samtools view -h -@ $num_threads -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted_hits.bam
+          samtools view -h -@ $num_threads -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted_hits.bam
           echo "samtools view -h -o ${filename3}_rev.sam ${filename3}_rev_tophat/accepted_hits.bam"
           samtools view -h -o ${filename3}_rev.sam ${filename3}_rev_tophat/accepted_hits.bam
          
@@ -505,51 +549,52 @@ paired_fastq_gz()
           echo "Grepping unique reads"
           echo "#######################"
           echo "grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam"
-          #grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam
+          grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam
           echo "grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam"
-          #grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam
+          grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam
          
           echo "######################################################"
           echo "Converting .sam to .bam before running samtools sort"
           echo "######################################################"
           echo "samtools view -bSh -@ $num_threads ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam"
-          #samtools view -bSh -@ $num_threads ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam
+          samtools view -bSh -@ $num_threads ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam
           echo "samtools view -bSh -@ $num_threads ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam"
-          #samtools view -bSh -@ $num_threads ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam
+          samtools view -bSh -@ $num_threads ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam
          
           echo "#######################"
           echo "Sorting unique reads"
           echo "#######################"
           echo "samtools sort -@ $num_threads ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam"
-          #samtools sort -@ $num_threads ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam
+          samtools sort -@ $num_threads ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam
           echo "samtools sort -@ $num_threads ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam"
-          #samtools sort -@ $num_threads ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam
+          samtools sort -@ $num_threads ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam
          
           echo "########################"
           echo "Merging fwd and rev reads"
           echo "########################"
           echo "samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam"
-          #samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
-
+          samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
+          if [ "$HAMR" != 0 ]; then
 	        echo "######################################################"
           echo "Resolving spliced alignments"
           echo "######################################################"
           echo "picard AddOrReplaceReadGroups I=${filename3}_merged.bam O=${filename3}_RG.bam ID=${filename3} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename3}"
-          #picard AddOrReplaceReadGroups I=${filename3}_merged.bam O=${filename3}_RG.bam ID=${filename3} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename3}
+          picard AddOrReplaceReadGroups I=${filename3}_merged.bam O=${filename3}_RG.bam ID=${filename3} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename3}
           echo "picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome"
-          #picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome
+          picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome
           echo "samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai"
-          #samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai
+          samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai
           echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-          #singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
+          singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
 	  
 	        echo "######################################################"
           echo "Running HAMR"
           echo "######################################################"
 	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
-	        #singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
-          #tophat_mapping_lincRNA_annotation
-	        #tophat_mapping_transcript_quantification
+	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+          tophat_mapping_lincRNA_annotation
+	        tophat_mapping_transcript_quantification
+          fi
           fi
           fi
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
@@ -563,6 +608,7 @@ paired_fastq_gz()
               star_mapping_lincRNA_annotation
 	            star_mapping_transcript_quantification
           fi
+          house_keeping
 }
 paired_fq()
 {
@@ -830,11 +876,52 @@ single_end()
           fi
           fi 
 }
+
+#############################################################################################################################################################################################################################
+# # Check if user supplied index folder for salmon, bowtie2 and star indexes. Build the indexes if not supplied.
+#############################################################################################################################################################################################################################
+
+if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
+  if [ ! -z "$index_folder" ]; then
+      mv -f $index_folder/*bt2l .
+      fbname=$(basename "$i" .bt2l | cut -d. -f1)
+  elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
+    echo "##########################################"
+    echo "Building reference genome index for Tophat"
+    echo "##########################################"
+    echo "bowtie2-build --threads -f $referencegenome ref_genome"
+    bowtie2-build -f $referencegenome ref_genome
+    echo "fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)"
+    fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)
+  fi
+elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
+  if [ ! -z "$index_folder" ]; then
+      mv -f $index_folder/star_index/ .
+  elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
+    echo "########################################"
+    echo "Building reference genome index for STAR"
+    echo "########################################"
+    echo "STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13"
+    STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13
+  fi
+fi
+
+if [ "$transcript_abun_quant" != 0 ]; then
+  if [ ! -z "$index_folder" ]; then
+      mv -f $index_folder/salmon_index/ .
+  elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
+  echo "####################################"
+  echo "Building reference genome for salmon"
+  echo "####################################"
+  echo "salmon index -i salmon_index -t $transcriptome"
+  salmon index -t $transcriptome -i salmon_index
+  fi
+fi
+
 #############################################################################################################################################################################################################################
 # # Check that the input fastq files has the appropriate extension and then trim reads, align the reads to the reference genome, quantify transcript abundance, identify RNA Mod. and LincRNA
 #############################################################################################################################################################################################################################
 
-# Paired end reads
 if [ ! -z "$left_reads" ] && [ ! -z "$right_reads" ]; then
     numb=$(ls "${left_reads[@]}" | wc -l)
     for f in "${left_reads[@]}"; do
@@ -855,7 +942,6 @@ if [ ! -z "$left_reads" ] && [ ! -z "$right_reads" ]; then
       fi
     done
 
-#house_keeping
 #single end read
 
 elif [ ! -z "$single_reads" ]; then
