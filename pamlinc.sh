@@ -170,9 +170,9 @@ paired_fastq_gz()
           
           if [ "$seq_type" == "PE" ]; then
           echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz"
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz
           fi
           fi
 
@@ -186,7 +186,7 @@ if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
   if [ ! -z "$index_folder" ]; then
     for i in $index_folder/*.bt2*; do
       mv -f $index_folder/*.bt2* .
-      fbname=$(basename "$i" .bt2l | cut -d. -f1)
+      fbname=$(basename "$i" .bt2 | cut -d. -f1)
     done
   elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
     echo "##########################################"
@@ -194,8 +194,8 @@ if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
     echo "##########################################"
     echo "bowtie2-build --threads -f $referencegenome ref_genome"
     bowtie2-build -f $referencegenome ref_genome
-    echo "fbname=$(basename "ref_genome" .bt2l | cut -d. -f1)"
-    fbname=$(basename "ref_genome" .bt2l | cut -d. -f1)
+    echo "fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)"
+    fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)
   fi
 elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
   if [ ! -z "$index_folder" ]; then
