@@ -159,8 +159,8 @@ paired_fastq_gz()
           echo "Trimming input read(s)"
           echo "######################"
           
-          echo "trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-          trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          #echo "trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+          #trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
           fi
           
           if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
@@ -184,8 +184,8 @@ paired_fastq_gz()
 
 if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
   if [ ! -z "$index_folder" ]; then
-    for i in $index_folder/*; do
-      mv -f $index_folder/*bt2l .
+    for i in $index_folder/*.bt2*; do
+      mv -f $index_folder/*.bt2* .
       fbname=$(basename "$i" .bt2l | cut -d. -f1)
     done
   elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
