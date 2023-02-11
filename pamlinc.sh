@@ -184,8 +184,8 @@ paired_fastq_gz()
 
 if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
   if [ ! -z "$index_folder" ]; then
-    for i in $index_folder/*.bt2*; do
-      mv -f $index_folder/*.bt2* .
+    for i in $index_folder/*.bt2; do
+      mv -f $i .
       fbname=$(basename "$i" .bt2 | cut -d. -f1)
     done
   elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
@@ -204,14 +204,14 @@ elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
     echo "########################################"
     echo "Building reference genome index for STAR"
     echo "########################################"
-    echo "STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13"
-    STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13
+    echo "STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang $sjdbOverhang --genomeSAindexNbases $genomeSAindexNbases"
+    STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang $sjdbOverhang --genomeSAindexNbases $genomeSAindexNbases
   fi
 fi
 
 if [ "$transcript_abun_quant" != 0 ]; then
   if [ ! -z "$index_folder" ]; then
-      mv -f $index_folder/salmon_index/ .
+    mv -f $index_folder/salmon_index/ .
   elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
   echo "####################################"
   echo "Building reference genome for salmon"

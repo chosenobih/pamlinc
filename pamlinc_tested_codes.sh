@@ -343,7 +343,6 @@ elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
     echo "Building reference genome index for STAR"
     echo "########################################"
     echo "STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13"
-    STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13
   fi
 fi
 

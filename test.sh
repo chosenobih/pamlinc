@@ -1,10 +1,10 @@
 #!/bin/bash
 #Chosen Obih
-#Script to process and analyze RNA-Seq data for transcript abundance, modified RNA and lincRNA
+#Script to process and analyze RNA-Seq data for transcript abundance quantification, modified RNA and lincRNA identifdication
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -A <reference_transcriptome> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -c sjdbOverhang -f genomeSAindexNbases -q transcript_abundance_quantification -e evolinc_i -m HAMR -r gene_attribute -n strandedness -k feature_type"
+      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -c sjdbOverhang -f genomeSAindexNbases -q transcript_abundance_quantification -e evolinc_i -m HAMR -r gene_attribute -n strandedness -k feature_type"
       echo ""
 
 cat <<'EOF'
@@ -12,7 +12,6 @@ cat <<'EOF'
   ###### Command line options ##########
   -g <reference genome fasta file>
   -a <reference genome annotation>
-  -A <reference_transcriptome>
   -i <index_folder>
   -l library type #note that this is a lower case L
   -1 <reads_1>
@@ -43,7 +42,6 @@ star=0
 tophat=0
 referencegenome=0
 referenceannotation=0
-transcriptome=0
 
 while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:r:n:htsqemy:" opt; do
   case $opt in
@@ -52,9 +50,6 @@ while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:r:n:htsqemy:" opt; do
      ;;
     a)
     referenceannotation=$OPTARG # Reference genome annotation
-     ;;
-    A)
-    transcriptome=$OPTARG # Reference genome transcriptome (transcript.fa)
      ;;
     i)
     index_folder=$OPTARG # Input folder
@@ -171,17 +166,15 @@ house_keeping()
     if [ ! -z "$index_folder" ]; then
         mv $fbname* $index_folder
         mv star_index $index_folder
-        mv $index_folder "$pipeline_output"
     elif [ -z "$index_folder" ]; then
-        mkdir index
-        mv $fbname* index
+        mkdir index_folder
+        mv $fbname* index_folder
         mv star_index "$pipeline_output"
     fi
     if [ "$transcript_abun_quant" != 0 ]; then
         mkdir transcript_abundance_quantification
-        mv *_salmon transcript_abundance_quantification
-        mkdir Feature_counts && mv *_featurecounts.txt* Feature_counts
-        mv Feature_counts transcript_abundance_quantification
+        mkdir featureCounts && mv *_featurecounts.txt* featureCounts
+        mv featureCounts transcript_abundance_quantification
         mv transcript_abundance_quantification "$pipeline_output"
     fi
     if [ "$evolinc_i" != 0 ]; then
@@ -216,16 +209,12 @@ tophat_mapping_transcript_quantification()
 {
       if [ "$transcript_abun_quant" != 0 ]; then
       echo "###########################################################################"
-      echo "Running salmon and featureCounts to quantify transcript"
+      echo "Running featureCounts to quantify transcript"
       echo "###########################################################################"    
         if [ "$seq_type" == "PE" ]; then
-        echo "salmon quant -l A -a ${filename3}_merged.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads"
-        salmon quant -l A -a ${filename3}_merged.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads
         echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
         featureCounts -p -T $num_threads -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam
         elif [ "$seq_type" == "SE" ]; then
-        echo "salmon quant -l A -a ${filename3}.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads"
-        salmon quant -l A -a ${filename3}.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads
         echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
         featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam
         fi 
@@ -236,16 +225,12 @@ star_mapping_transcript_quantification()
 {
       if [ "$transcript_abun_quant" != 0 ]; then
       echo "###########################################################################"
-      echo "Running salmon and featureCounts to quantify transcript"
+      echo "Running featureCounts to quantify transcript"
       echo "###########################################################################"    
         if [ "$seq_type" == "PE" ]; then
-        echo "salmon quant -l A -a ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads"
-        salmon quant -l A -a ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads
         echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam"
         featureCounts -p -T $num_threads -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam
         elif [ "$seq_type" == "SE" ]; then
-        echo "salmon quant -l A -a ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads"
-        salmon quant -l A -a ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}_salmon -t $referencegenome -p $num_threads
         echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam"
         featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam
         fi 
@@ -256,16 +241,12 @@ sra_id_transcript_quantification()
 {
       if [ "$transcript_abun_quant" != 0 ]; then
       echo "###########################################################################"
-      echo "Running salmon and featureCounts to quantify transcript"
+      echo "Running featureCounts to quantify transcript"
       echo "###########################################################################"    
         if [ "$seq_type" == "PE" ]; then
-        echo "salmon quant -l A -a ${sra_id}_merged.bam -o ${sra_id}_salmon -t $referencegenome -p $num_threads"
-        salmon quant -l A -a ${sra_id}_merged.bam -o ${sra_id}_salmon -t $referencegenome -p $num_threads
         echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
         featureCounts -p -T $num_threads -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
         elif [ "$seq_type" == "SE" ]; then
-        echo "salmon quant -l A -a ${sra_id}.bam -o ${sra_id}_salmon -t $referencegenome -p $num_threads"
-        salmon quant -l A -a ${sra_id}.bam -o ${sra_id}_salmon -t $referencegenome -p $num_threads
         echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
         featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
         fi 
@@ -432,10 +413,10 @@ paired_fq_gz()
           echo "###################################"
           
           if [ "$seq_type" == "PE" ]; then
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fq.gz,${filename3}_1U.fq.gz"
-          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fq.gz,${filename3}_1U.fq.gz
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fq.gz,${filename3}_2U.fq.gz"
-          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fq.gz,${filename3}_2U.fq.gz
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq.gz,${filename3}_1U.fq.gz"
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq.gz,${filename3}_1U.fq.gz
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq.gz,${filename3}_2U.fq.gz"
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq.gz,${filename3}_2U.fq.gz
          
         
           echo "########################"
@@ -531,12 +512,11 @@ paired_fastq_gz()
           echo "###################################"
           
           if [ "$seq_type" == "PE" ]; then
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
+          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz"
+          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz,${filename3}_2U.fastq.gz
          
-        
           echo "########################"
           echo "Converting .bam to .sam"
           echo "########################"
@@ -574,6 +554,7 @@ paired_fastq_gz()
           echo "########################"
           echo "samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam"
           samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
+          
           if [ "$HAMR" != 0 ]; then
 	        echo "######################################################"
           echo "Resolving spliced alignments"
@@ -592,9 +573,10 @@ paired_fastq_gz()
           echo "######################################################"
 	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
 	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+          fi
+
           tophat_mapping_lincRNA_annotation
 	        tophat_mapping_transcript_quantification
-          fi
           fi
           fi
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
@@ -631,11 +613,10 @@ paired_fq()
           echo "###################################"
           
           if [ "$seq_type" == "PE" ]; then
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fq,${filename3}_1U.fq"
-          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fq,${filename3}_1U.fq
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fq,${filename3}_2U.fq"
-          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fq,${filename3}_2U.fq
-         
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq,${filename3}_1U.fq"
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq,${filename3}_1U.fq
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq,${filename3}_2U.fq"
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq,${filename3}_2U.fq
         
           echo "########################"
           echo "Converting .bam to .sam"
@@ -675,6 +656,7 @@ paired_fq()
           echo "samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam"
           #samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
 
+          if [ "$HAMR" != 0 ]; then
 	        echo "######################################################"
           echo "Resolving spliced alignments"
           echo "######################################################"
@@ -696,6 +678,7 @@ paired_fq()
 	        #tophat_mapping_transcript_quantification
           fi
           fi
+          fi
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
               if [ "$seq_type" == "PE" ]; then
               echo "###################################"
@@ -707,6 +690,7 @@ paired_fq()
               #star_mapping_lincRNA_annotation
 	            #star_mapping_transcript_quantification
           fi
+          house_keeping
 }
 
 paired_fastq()
@@ -730,10 +714,10 @@ paired_fastq()
           echo "###################################"
           
           if [ "$seq_type" == "PE" ]; then
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fastq,${filename3}_1U.fastq"
-          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation sbicolor ${filename3}_1P.fastq,${filename3}_1U.fastq
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fastq,${filename3}_2U.fastq"
-          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation sbicolor ${filename3}_2P.fastq,${filename3}_2U.fastq
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq,${filename3}_1U.fastq"
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq,${filename3}_1U.fastq
+          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq,${filename3}_2U.fastq"
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq,${filename3}_2U.fastq
         
           echo "########################"
           echo "Converting .bam to .sam"
@@ -773,6 +757,7 @@ paired_fastq()
           echo "samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam"
           #samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
 
+          if [ "$HAMR" != 0 ]; then
 	        echo "######################################################"
           echo "Resolving spliced alignments"
           echo "######################################################"
@@ -794,6 +779,7 @@ paired_fastq()
 	        #tophat_mapping_transcript_quantification
           fi
           fi
+          fi
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
               if [ "$seq_type" == "PE" ]; then
               echo "###################################"
@@ -805,6 +791,7 @@ paired_fastq()
               #star_mapping_lincRNA_annotation
 	            #star_mapping_transcript_quantification
           fi
+          house_keeping
 }
 
 single_end()
@@ -827,8 +814,8 @@ single_end()
           echo "Running tophat2 in single end mode"
           echo "###################################"
           
-          #echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation TAIR10_genome ${filename}_trimmed.${extension}"
-          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation TAIR10_genome ${filename}_trimmed.${extension}
+          #echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation $fbname ${filename}_trimmed.${extension}"
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation $fbname ${filename}_trimmed.${extension}
         
           echo "########################"
           echo "Converting .bam to .sam"
@@ -854,6 +841,7 @@ single_end()
           echo "samtools sort -@ $num_threads ${filename}_unique.bam > ${filename}_sorted.bam"
           samtools sort -@ $num_threads ${filename}_unique.bam > ${filename}_sorted.bam
           
+          if [ "$HAMR" != 0 ]; then
 	        echo "######################################################"
           echo "Resolving spliced alignments"
           echo "######################################################"
@@ -870,21 +858,25 @@ single_end()
           echo "Running HAMR"
           echo "######################################################"
 	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05"
-	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05
-          #tophat_mapping_lincRNA_annotation
-	        #tophat_mapping_transcript_quantification
+          singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05
           fi
-          fi 
+          tophat_mapping_lincRNA_annotation
+	        tophat_mapping_transcript_quantification
+          fi
+          fi
+          house_keeping
 }
 
 #############################################################################################################################################################################################################################
-# # Check if user supplied index folder for salmon, bowtie2 and star indexes. Build the indexes if not supplied.
+# Check if user supplied index folder which contains bowtie2 and star indexes. Build the indexes if not supplied.
 #############################################################################################################################################################################################################################
 
 if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
   if [ ! -z "$index_folder" ]; then
-      mv -f $index_folder/*bt2l .
-      fbname=$(basename "$i" .bt2l | cut -d. -f1)
+    for i in $index_folder/*.bt2; do
+      mv -f $i .
+      fbname=$(basename "$i" .bt2 | cut -d. -f1)
+    done
   elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
     echo "##########################################"
     echo "Building reference genome index for Tophat"
@@ -901,20 +893,8 @@ elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
     echo "########################################"
     echo "Building reference genome index for STAR"
     echo "########################################"
-    echo "STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13"
-    STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang 100 --genomeSAindexNbases 13
-  fi
-fi
-
-if [ "$transcript_abun_quant" != 0 ]; then
-  if [ ! -z "$index_folder" ]; then
-      mv -f $index_folder/salmon_index/ .
-  elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
-  echo "####################################"
-  echo "Building reference genome for salmon"
-  echo "####################################"
-  echo "salmon index -i salmon_index -t $transcriptome"
-  salmon index -t $transcriptome -i salmon_index
+    echo "STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang $sjdbOverhang --genomeSAindexNbases $genomeSAindexNbases"
+    STAR --runThreadN $num_threads --runMode genomeGenerate --genomeDir star_index --genomeFastaFiles $referencegenome --sjdbGTFfile $referenceannotation --sjdbOverhang $sjdbOverhang --genomeSAindexNbases $genomeSAindexNbases
   fi
 fi
 
@@ -942,7 +922,7 @@ if [ ! -z "$left_reads" ] && [ ! -z "$right_reads" ]; then
       fi
     done
 
-#single end read
+#single end reads
 
 elif [ ! -z "$single_reads" ]; then
         numb=$(ls "${single_reads[@]}" | wc -l)
@@ -973,10 +953,10 @@ elif [ ! -z "$sra_id" ]; then
         echo "Running tophat2 in paired end mode"
         echo "###################################"
         
-        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation TAIR10_genome ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz"
-        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation TAIR10_genome ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz
-        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation TAIR10_genome ${sra_id}_2P.fastq.gz,${sra_id}_2U.fastq.gz"
-        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation TAIR10_genome ${sra_id}_2P.fastq.gz,${sra_id}_2U.fastq.gz
+        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz"
+        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz
+        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_2P.fastq.gz,${sra_id}_2U.fastq.gz"
+        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_2P.fastq.gz,${sra_id}_2U.fastq.gz
                  
         echo "########################"
         echo "Converting .bam to .sam"
@@ -1016,6 +996,7 @@ elif [ ! -z "$sra_id" ]; then
         echo "samtools merge -@ $num_threads -f ${sra_id}_merged.bam ${sra_id}_fwd_sorted.bam ${sra_id}_rev_sorted.bam"
         samtools merge -@ $num_threads -f ${sra_id}_merged.bam ${sra_id}_fwd_sorted.bam ${sra_id}_rev_sorted.bam
 
+        if [ "$HAMR" != 0 ]; then
 	      echo "######################################################"
         echo "Resolving spliced alignments"
         echo "######################################################"
@@ -1035,6 +1016,7 @@ elif [ ! -z "$sra_id" ]; then
 	      singularity run --cleanenv hamr_xi_1.4.sif -fe ${sra_id}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05
         sra_id_lincRNA_annotation
 	      sra_id_transcript_quantification
+        fi
 
         elif [ "$seq_type" == "SE" ]; then
         #echo "trimmomatic SE -threads $num_threads ${sra_id}.fastq ${sra_id}_trimmed.fastq ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
@@ -1045,8 +1027,8 @@ elif [ ! -z "$sra_id" ]; then
         echo "Running tophat2 in single end mode"
         echo "###################################"
           
-        #echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_tophat -G $referenceannotation TAIR10_genome ${sra_id}_trimmed.fastq"
-        #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_tophat -G $referenceannotation TAIR10_genome ${sra_id}_trimmed.fastq
+        #echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_tophat -G $referenceannotation $fbname ${sra_id}_trimmed.fastq"
+        #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_tophat -G $referenceannotation $fbname ${sra_id}_trimmed.fastq
         
         echo "########################"
         echo "Converting .bam to .sam"
