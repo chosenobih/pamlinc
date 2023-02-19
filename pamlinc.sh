@@ -209,17 +209,7 @@ elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
   fi
 fi
 
-if [ "$transcript_abun_quant" != 0 ]; then
-  if [ ! -z "$index_folder" ]; then
-    mv -f $index_folder/salmon_index/ .
-  elif [ ! -z "$referencegenome" ] && [ -z "$index_folder" ]; then
-  echo "####################################"
-  echo "Building reference genome for salmon"
-  echo "####################################"
-  echo "salmon index -i salmon_index -t $transcriptome"
-  salmon index -t $transcriptome -i salmon_index
-  fi
-fi
+
 # ############################################################################################################################################################################################################################
 # # Check that the input fastq files has the appropriate extension and then trim reads, align the reads to the reference genome, quantify transcript abundance, identify RNA Mod. and LincRNA
 # ############################################################################################################################################################################################################################
