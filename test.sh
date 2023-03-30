@@ -163,6 +163,8 @@ singularity pull docker://biocontainers/bowtie2:v2.4.1_cv1
 
 house_keeping()
 {
+    mkdir intermediate_files
+
     if [ -e "./ref_annotation.gtf" ]; then
          rm ref_annotation*
     fi
@@ -186,18 +188,21 @@ house_keeping()
     fi
     if [ "$HAMR" != 0 ]; then
         mv *_HAMR* "$pipeline_output"
-        mv *.bai "$pipeline_output"
+        mv *.bai intermediate_files
     fi
     if [ "$tophat" != 0 ]; then
-        mv *_tophat* "$pipeline_out"
+        mkdir mapped_files
+        mv *_tophat* mapped_files
+        mv mapped_files "$pipeline_output"
     fi
   
-  mkdir trimmomatic
-  mv *_1P* *_1U* *_2P* *_2U* *trimlog* *_trimmed.* trimmomatic
-  mv trimmomatic "$pipeline_output"
-  mv *.bam "$pipeline_output"
-  mv *.sam "$pipeline_output"
-  mv *.gtf "$pipeline_output"
+  mkdir trimmomatic_output
+  mv *_1P* *_1U* *_2P* *_2U* *_trimmed.* trimmomatic_output
+  mv trimmomatic_output "$pipeline_output"
+  mv *.bam intermediate_files
+  mv *.sam intermediate_files
+  mv *.gtf intermediate_files
+  mv intermediate_files "$pipeline_output"
   rm *.sif
   echo "##############################"
   echo "Pipeline executed successfully"
@@ -505,7 +510,7 @@ paired_fastq_gz()
           echo "Trimming input read(s)"
           echo "######################"
           
-          #echo "trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+          echo "trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
           #trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
           fi
           
