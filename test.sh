@@ -426,7 +426,6 @@ paired_fq_gz()
           echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq.gz,${filename3}_2U.fq.gz"
           #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq.gz,${filename3}_2U.fq.gz
          
-        
           echo "########################"
           echo "Converting .bam to .sam"
           echo "########################"
@@ -1024,6 +1023,7 @@ elif [ ! -z "$sra_id" ]; then
 	      singularity run --cleanenv hamr_xi_1.4.sif -fe ${sra_id}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05
         sra_id_lincRNA_annotation
 	      sra_id_transcript_quantification
+        house_keeping
         fi
 
         elif [ "$seq_type" == "SE" ]; then
@@ -1082,6 +1082,7 @@ elif [ ! -z "$sra_id" ]; then
         fi
         sra_id_lincRNA_annotation
 	      sra_id_transcript_quantification
+        house_keeping
         fi
         fi
         fi
