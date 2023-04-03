@@ -1,3 +1,0 @@
-pamlinc documentation
-
-## Requirement:
