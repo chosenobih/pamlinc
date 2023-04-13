@@ -8,12 +8,12 @@
   1. Reference genome (FASTA)
   2. Reference annotation (GTF/GFF3)
   3. RNA-Seq reads (FASTQ) - Paired end or Single end or NCBI SRA ID.
-* Optional files
-  The -i flag allows users to provide a reference genome index folder which should contain the genome index files for either bowtie2, STAR or both,           depending on the user's aligner of choice. The STAR index folder should be named 'star_index' and it should be a subdirectory of the reference genome       index folder provided. PAMLINC automatically generates the reference genome index files for both bowtie2 and STAR when it is not provided by the user but   this increases the run time of PAMLINC.
+* Optional files:
+    The -i flag allows users to provide a reference genome index folder which should contain the genome index files for either bowtie2, STAR or both,           depending on the user's aligner of choice. The STAR index folder should be named 'star_index' and it should be a subdirectory of the reference genome       index folder provided. PAMLINC automatically generates the reference genome index files for both bowtie2 and STAR when it is not provided by the user       but this increases the run time of PAMLINC.
 
 
 PAMLINC command line arguments and description
-----------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
 | Argument      | Description                                                                                                 |
 | ------------- |:-----------------------------------------------------------------------------------------------------------:|
 | -g            | reference genome fasta file                                                                                 |
