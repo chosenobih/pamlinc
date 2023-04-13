@@ -38,12 +38,12 @@ PAMLINC command line arguments and description
 Required dependecies
 --------------------
 1. Linux-based computer, server or cluster.
-2. [Singularity](https://docs.sylabs.io/guides/3.0/user-guide/quick_start.html)
+2. [Singularity v3.8 and above](https://docs.sylabs.io/guides/3.0/user-guide/quick_start.html)
 3. [Conda](https://conda.io/projects/conda/en/stable/user-guide/install/download.html)
 
 Running PAMLINC
 -----------------------
-Pull the container:  
+Clone the repo:  
 ```
 singularity pull docker://
 ```  
