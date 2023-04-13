@@ -43,18 +43,32 @@ Required dependecies
 
 Running PAMLINC
 -----------------------
-1. Download and install singularity and conda
+Download and install singularity and conda
 
-2. Clone the repo:  
 ```
+#clone the repo:  
 https://github.com/chosenobih/pamlinc.git
 ```  
-3 Run setup_script.sh
 ```
+#run setup_script.sh
 bash setup_script.sh
 ```
-4. Download genome file from CyVerse data store
 ```
+#download genome file from CyVerse data store
 wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.fa
 ```
-5. 
+```
+#download genome annotation file from CyVerse data store
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.gff3
+```
+
+Running pamlinc in paired-end mode
+```
+#download sample data from CyVerse data store:
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1_R1.fastq.gz
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1_R2.fastq.gz
+```
+```
+#run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance. These options can be turned on or off using different flags
+bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result -y "PE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz
+```
