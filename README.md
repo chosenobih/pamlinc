@@ -39,6 +39,7 @@ Required dependecies
 --------------------
 1. Linux-based computer, server or cluster.
 2. [Singularity](https://docs.sylabs.io/guides/3.0/user-guide/quick_start.html)
+3. [Conda](https://conda.io/projects/conda/en/stable/user-guide/install/download.html)
 
 Running PAMLINC
 -----------------------
