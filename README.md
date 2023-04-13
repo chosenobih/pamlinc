@@ -8,6 +8,9 @@
   1. Reference genome (FASTA)
   2. Reference annotation (GTF/GFF3)
   3. RNA-Seq reads (FASTQ) - Paired end or Single end or NCBI SRA ID.
+* Optional files
+  The -i flag allows users to provide a reference genome index folder which should contain the genome index files for either bowtie2, STAR or both,           depending on the user's aligner of choice. The STAR index folder should be named 'star_index' and it should be a subdirectory of the reference genome       index folder provided. PAMLINC automatically generates the reference genome index files for both bowtie2 and STAR when it is not provided by the user but   this increases the run time of PAMLINC.
+
 
 PAMLINC command line arguments and description
 ----------------------------------------------
@@ -15,14 +18,13 @@ PAMLINC command line arguments and description
 | ------------- |:-----------------------------------------------------------------------------------------------------------:|
 | -g            | reference genome fasta file                                                                                 |
 | -a            | reference genome annotation file                                                                            |
-| -A            | reference genome annotation file type ("GTF" or "GFF3" supported. Include double quotation on command line) |
-| -i            | index folder                                                                                                |
+| -i            | reference genome index folder                                                                               |
 | -l            | library type  (library type can be fr-unstranded, fr-firststrand or fr-secondstrand)                        |
 | -1            | read_1                                                                                                      |
 | -2            | read_2                                                                                                      |
 | -u            | single_reads                                                                                                |
 | -o            | output directory                                                                                            |
-| -S            | NCBI SRA-ID                                                                                                 |
+| -S            | NCBI SRA-ID #upper case S                                                                                   |
 | -p            | number of threads                                                                                           |
 | -q            | activate transcript abundance quantification option                                                         |
 | -t            | selects tophat2 as aligner of choice                                                                        |
@@ -69,6 +71,6 @@ wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1
 wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1_R2.fastq.gz
 ```
 ```
-#run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance. These options can be turned on or off using different flags
+#run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
 bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result -y "PE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz
 ```
