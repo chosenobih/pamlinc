@@ -43,7 +43,18 @@ Required dependecies
 
 Running PAMLINC
 -----------------------
-Clone the repo:  
+1. Download and install singularity and conda
+
+2. Clone the repo:  
 ```
-singularity pull docker://
+https://github.com/chosenobih/pamlinc.git
 ```  
+3 Run setup_script.sh
+```
+bash setup_script.sh
+```
+4. Download genome file from CyVerse data store
+```
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.fa
+```
+5. 
