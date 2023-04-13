@@ -1,5 +1,15 @@
 #!/bin/bash
 
+#create new conda environment
+conda create -n pamlinc_env python=3.10.6
+conda activate pamlinc_env
+
+#Add conda channels
+conda config --add channels conda-forge 
+conda config --add channels defaults  
+conda config --add channels bioconda
+
+#install conda packages
 conda install star==2.7.10a -c bioconda
 conda install trimmomatic==0.35 -c bioconda
 conda install gffread==0.12.1 -c bioconda
