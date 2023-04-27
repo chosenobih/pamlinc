@@ -52,6 +52,11 @@ Download and install singularity and conda
 https://github.com/chosenobih/pamlinc.git
 ```  
 ```
+#create a new conda environment for pamlinc and activate the environment
+conda create -n pamlinc_env python=2.7.16
+conda activate pamlinc_env
+```
+```
 #run setup_script.sh
 bash setup_script.sh
 ```
