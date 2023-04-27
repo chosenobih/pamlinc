@@ -62,11 +62,11 @@ bash setup_script.sh
 ```
 ```
 #download genome file from CyVerse data store
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.fa
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10_genome.fa
 ```
 ```
 #download genome annotation file from CyVerse data store
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.gff3
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10.gff3
 ```
 
 Running pamlinc in paired-end mode with a fastq file
