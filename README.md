@@ -72,32 +72,32 @@ wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidop
 Running pamlinc in paired-end mode with a fastq file
 ```
 #download sample data from CyVerse data store:
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1_R1.fastq.gz
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1_R2.fastq.gz
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/ERR3333443_sampled_R1.fastq.gz
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/ERR3333443_sampled_R2.fastq.gz
 ```
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result -y "PE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz
+bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result -y "PE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 ERR3333443_sampled_R1.fastq.gz -2 ERR3333443_sampled_R2.fastq.gz
 ```
 
 Running pamlinc in single-end mode with a fastq file
 ```
 #download sample data from CyVerse data store:
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1_R1.fastq.gz
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/SRR3581899_sampled_R1.fastq.gz
 ```
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result -y "SE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz
+bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result_SE -y "SE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz
 ```
 
 Running pamlinc in paired-end mode with an SRA-ID
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result_SE -t -y "PE" -p 6 -S SRR3581899 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12
+bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result_SRA-ID_PE -t -y "PE" -p 6 -S ERR3333443 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12
 ```
 
 Running pamlinc in single-end mode with an SRA-ID
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result_SRA_SE -t -y "SE" -p 6 -S SRR3581899 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12
+bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result_SRA-ID_SE -t -y "SE" -p 6 -S SRR3581899 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12
 ```
