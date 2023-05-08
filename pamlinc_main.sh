@@ -197,8 +197,12 @@ house_keeping()
     fi
   
   mkdir trimmomatic_output
+  if [ "$seq_type" == "SE" ]; then
+  mv *_trimmed.* trimmomatic_output
+  elif [ "$seq_type" == "PE" ]; then
   mv *_1P* *_1U* *_2P* *_2U* *_trimmed.* trimmomatic_output
   mv trimmomatic_output "$pipeline_output"
+  fi
   mv *.bam intermediate_files
   mv *.sam intermediate_files
   mv *.gtf intermediate_files
@@ -219,13 +223,23 @@ tophat_mapping_transcript_quantification()
       echo "###########################################################################"
       echo "Running featureCounts to quantify transcript"
       echo "###########################################################################"    
-        if [ "$seq_type" == "PE" ]; then
-        echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
-        featureCounts -p -T $num_threads -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam
-        elif [ "$seq_type" == "SE" ]; then
-        echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_sorted.bam"
-        featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_sorted.bam
-        fi 
+        if [ "$evolinc_i" != 0 ]; then
+            if [ "$seq_type" == "PE" ]; then
+            echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
+            featureCounts -p -T $num_threads -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_merged.bam
+            elif [ "$seq_type" == "SE" ]; then
+            echo "featureCounts -T $num_threads -s $strandedness -a ./${filename3}.lincRNA/${filename3}_lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_sorted.bam"
+            featureCounts -T $num_threads -s $strandedness -a ./${filename3}.lincRNA/${filename3}_lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_sorted.bam
+            fi 
+        elif [ "$evolinc_i" !== 0 ]; then
+            if [ "$seq_type" == "PE" ]; then
+            echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
+            featureCounts -p -T $num_threads -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_merged.bam
+            elif [ "$seq_type" == "SE" ]; then
+            echo "featureCounts -T $num_threads -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_sorted.bam"
+            featureCounts -T $num_threads -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_sorted.bam
+            fi 
+        fi
       fi
 }
 
@@ -251,13 +265,23 @@ sra_id_transcript_quantification()
       echo "###########################################################################"
       echo "Running featureCounts to quantify transcript"
       echo "###########################################################################"    
-        if [ "$seq_type" == "PE" ]; then
-        echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
-        featureCounts -p -T $num_threads -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
-        elif [ "$seq_type" == "SE" ]; then
-        echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam"
-        featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam
-        fi 
+        if [ "$evolinc_i" != 0 ]; then
+            if [ "$seq_type" == "PE" ]; then
+            echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
+            featureCounts -p -T $num_threads -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
+            elif [ "$seq_type" == "SE" ]; then
+            echo "featureCounts -T $num_threads -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam"
+            featureCounts -T $num_threads -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam
+            fi
+        elif [ "$evolinc_i" !== 0 ]; then
+            if [ "$seq_type" == "PE" ]; then
+            echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
+            featureCounts -p -T $num_threads -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
+            elif [ "$seq_type" == "SE" ]; then
+            echo "featureCounts -T $num_threads -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam"
+            featureCounts -T $num_threads -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam
+            fi
+        fi
       fi
 }
 
@@ -948,12 +972,12 @@ elif [ ! -z "$sra_id" ]; then
               echo "######################"
 
               echo "singularity run --cleanenv sra-tools_3.0.0.sif prefetch $sra_id"
-              #singularity run --cleanenv sra-tools_3.0.0.sif prefetch $sra_id
+              singularity run --cleanenv sra-tools_3.0.0.sif prefetch $sra_id
               echo "singularity run --cleanenv sra-tools_3.0.0.sif fasterq-dump -e $num_threads $sra_id"
-              #singularity run --cleanenv sra-tools_3.0.0.sif fasterq-dump -e $num_threads $sra_id
+              singularity run --cleanenv sra-tools_3.0.0.sif fasterq-dump -e $num_threads $sra_id
               
               echo "trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-              #trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+              trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
             
               if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
               echo "###################################"
@@ -961,9 +985,9 @@ elif [ ! -z "$sra_id" ]; then
               echo "###################################"
               
               echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz"
-              #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz
+              singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz
               echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_2P.fastq.gz,${sra_id}_2U.fastq.gz"
-              #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_2P.fastq.gz,${sra_id}_2U.fastq.gz
+              singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_2P.fastq.gz,${sra_id}_2U.fastq.gz
                       
               echo "########################"
               echo "Converting .bam to .sam"
@@ -1089,7 +1113,7 @@ elif [ ! -z "$sra_id" ]; then
                 echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${sra_id}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05"
                 #singularity run --cleanenv hamr_xi_1.4.sif -fe ${sra_id}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05
                 fi
-                sra_id_lincRNA_annotation
+                #sra_id_lincRNA_annotation
                 sra_id_transcript_quantification
                 house_keeping
                 fi
