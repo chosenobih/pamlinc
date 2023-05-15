@@ -1,5 +1,7 @@
 # PAMLINC: Parallel Annotation of Modified RNA and LincRNA
 
+![pamlinc_workflow drawio](https://github.com/chosenobih/pamlinc/assets/50637858/41f48068-9c07-4780-8d28-5775d114f91b)
+
 ## Introduction
 
 * PAMLINC is a workflow for processing raw RNA-Seq illumina data for rapid quantification of transcript abundance, RNA modifications and Long non-coding Intergenic ribonucleotides (lincRNA).
@@ -9,7 +11,7 @@
   2. Reference annotation (GTF/GFF3)
   3. RNA-Seq reads (FASTQ) - Paired end or Single end or NCBI SRA ID.
 * Optional files:
-    The -i flag allows users to provide a reference genome index folder which should contain the genome index files for either bowtie2, STAR or both,           depending on the user's aligner of choice. The STAR index folder should be named 'star_index' and it should be a subdirectory of the reference genome       index folder provided. PAMLINC automatically generates the reference genome index files for both bowtie2 and STAR when it is not provided by the user       but this increases the run time of PAMLINC.
+    The -i flag allows users to provide a reference genome index folder which should contain the genome index files for either bowtie2, STAR or both, depending on the user's aligner of choice. The STAR index folder should be named 'star_index' and it should be a subdirectory of the reference genome index folder provided. PAMLINC automatically generates the reference genome index files for both bowtie2 and STAR when it is not provided by the user but this increases the run time of PAMLINC.
 
 
 PAMLINC command line arguments and description
