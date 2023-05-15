@@ -4,14 +4,15 @@
 
 ## Introduction
 
-* PAMLINC is a workflow for processing raw RNA-Seq illumina data for rapid quantification of transcript abundance, RNA modifications and Long non-coding Intergenic ribonucleotides (lincRNA).
-* PMALINC can process raw FASTQ files containing either paired-end or single-end reads. It can also process sequence read archive (SRA) from NCBI using a SRA ID. PAMLINC supports two reads aligner options: tophat2 and STAR but we recommend that users who are interested in using PAMLINC to annotate RNA modification select tophat2 as the aligner of choice due to alignment alogirthms compatibility.
+* PAMLINC is a workflow for processing raw RNA-Seq illumina data for rapid quantification of transcript abundance, annotation of RNA modifications and Long non-coding Intergenic ribonucleotides (lincRNA).
+* PAMLINC can process raw FASTQ files containing either paired-end or single-end reads. It can also process sequence read archive (SRA) from NCBI using a SRA ID. PAMLINC supports two reads aligner options: tophat2 and STAR but we recommend that users who are interested in using PAMLINC to annotate RNA modification select tophat2 as the aligner of choice due to alignment alogirthms compatibility.
 * PAMLINC minimally requires the following input data:
   1. Reference genome (FASTA)
   2. Reference annotation (GTF/GFF3)
   3. RNA-Seq reads (FASTQ) - Paired end or Single end or NCBI SRA ID.
 * Optional files:
     The -i flag allows users to provide a reference genome index folder which should contain the genome index files for either bowtie2, STAR or both, depending on the user's aligner of choice. The STAR index folder should be named 'star_index' and it should be a subdirectory of the reference genome index folder provided. PAMLINC automatically generates the reference genome index files for both bowtie2 and STAR when it is not provided by the user but this increases the run time of PAMLINC.
+* Output: When run with all three flags (-h, -e, -t), PAMLINC generates six folders in the output directory. The folders are <sample_name>_HAMR, <sample_name>_linRNA, intermediate_files, mapped_files, transcript_abund_quant and trimmomatic_output
 
 
 PAMLINC command line arguments and description
