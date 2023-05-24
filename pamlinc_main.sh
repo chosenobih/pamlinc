@@ -137,11 +137,14 @@ fi
 ###################################################################################################################
 # # Check reference genome annotation file type and convert to .gtf if .gff file was supplied by user.
 ###################################################################################################################
+#extract the basename of input reference genome
+gname=$(basename "$referencegenome" | cut -d. -f1)
+
 if (grep -q -E 'transcript_id | gene_id' $referenceannotation); then
     echo "$referenceannotation is in .gtf format"
     else
-    gffread $referenceannotation -T -o ref_annotation.gtf
-    referenceannotation=ref_annotation.gtf
+    gffread $referenceannotation -T -o "$gname".gtf
+    referenceannotation="$gname".gtf
 fi
 
 ###################################################################################################################
@@ -189,6 +192,7 @@ house_keeping()
     if [ "$HAMR" != 0 ]; then
         mv *_HAMR* "$pipeline_output"
         mv *.bai intermediate_files
+        rm "$gname".fa.fai "$gname".dict
     fi
     if [ "$tophat" != 0 ]; then
         mkdir mapped_files
@@ -200,7 +204,7 @@ house_keeping()
     if [ "$seq_type" == "SE" ]; then
         mv *_trimmed.* trimmomatic_output
     elif [ "$seq_type" == "PE" ]; then
-        mv *_1P* *_1U* *_2P* *_2U* trimmomatic_output
+          mv *_1P* *_1U* *_2P* *_2U* trimmomatic_output
     fi
     mv trimmomatic_output "$pipeline_output"
   
@@ -609,8 +613,7 @@ paired_fastq_gz()
 
           tophat_mapping_lincRNA_annotation
 	        tophat_mapping_transcript_quantification
-          fi
-          fi
+
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
               if [ "$seq_type" == "PE" ]; then
               echo "###################################"
@@ -621,8 +624,11 @@ paired_fastq_gz()
               fi
               star_mapping_lincRNA_annotation
 	            star_mapping_transcript_quantification
-          fi
+
           house_keeping
+          fi
+          fi
+          fi
 }
 paired_fq()
 {
@@ -903,6 +909,13 @@ single_end()
 # Check if user supplied index folder which contains bowtie2 and star indexes. Build the indexes if not supplied.
 #############################################################################################################################################################################################################################
 
+if [ "$HAMR" != 0 ]; then
+  echo "samtools dict $referencegenome -o $gname.dict"
+  samtools dict $referencegenome -o "$gname".dict
+  echo "samtools faidx $referencegenome"
+  samtools faidx $referencegenome
+fi
+
 if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
   if [ ! -z "$index_folder" ]; then
     for i in $index_folder/*.bt2; do
@@ -913,10 +926,10 @@ if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
     echo "##########################################"
     echo "Building reference genome index for Tophat"
     echo "##########################################"
-    echo "bowtie2-build --threads -f $referencegenome ref_genome"
-    bowtie2-build -f $referencegenome ref_genome
-    echo "fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)"
-    fbname=$(basename "ref_genome" .bt2 | cut -d. -f1)
+    echo "bowtie2-build --threads -f $referencegenome $gname"
+    bowtie2-build -f $referencegenome "$gname"
+    echo "fbname=$(basename "$gname" .bt2 | cut -d. -f1)"
+    fbname=$(basename "$gname" .bt2 | cut -d. -f1)
   fi
 elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
   if [ ! -z "$index_folder" ]; then
