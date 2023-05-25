@@ -167,11 +167,10 @@ singularity pull docker://biocontainers/bowtie2:v2.4.1_cv1
 house_keeping()
 {
     mkdir intermediate_files
-
-    if [ -e "./ref_annotation.gtf" ]; then
-         rm ref_annotation*
+    mkdir trimmomatic_output
+    if [ -e "./$gname.gtf" ]; then
+         rm "$gname".gtf
     fi
-
     if [ ! -z "$index_folder" ]; then
         mv *.bt2 "$index_folder"
         #mv star_index "$index_folder"
@@ -199,12 +198,10 @@ house_keeping()
         mv *_tophat* mapped_files
         mv mapped_files "$pipeline_output"
     fi
-  
-    mkdir trimmomatic_output
     if [ "$seq_type" == "SE" ]; then
         mv *_trimmed.* trimmomatic_output
     elif [ "$seq_type" == "PE" ]; then
-          mv *_1P* *_1U* *_2P* *_2U* trimmomatic_output
+        mv *_1P.* *_1U.* *_2P.* *_2U.* trimmomatic_output
     fi
     mv trimmomatic_output "$pipeline_output"
   
@@ -549,71 +546,71 @@ paired_fastq_gz()
           
           if [ "$seq_type" == "PE" ]; then
           echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
           echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz
+          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz
          
           echo "########################"
           echo "Converting .bam to .sam"
           echo "########################"
           echo "samtools view -h -@ $num_threads -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted_hits.bam"
-          samtools view -h -@ $num_threads -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted_hits.bam
+          #samtools view -h -@ $num_threads -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted_hits.bam
           echo "samtools view -h -o ${filename3}_rev.sam ${filename3}_rev_tophat/accepted_hits.bam"
-          samtools view -h -o ${filename3}_rev.sam ${filename3}_rev_tophat/accepted_hits.bam
+          #samtools view -h -o ${filename3}_rev.sam ${filename3}_rev_tophat/accepted_hits.bam
          
           echo "#######################"
           echo "Grepping unique reads"
           echo "#######################"
           echo "grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam"
-          grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam
+          #grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam
           echo "grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam"
-          grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam
+          #grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam
          
           echo "######################################################"
           echo "Converting .sam to .bam before running samtools sort"
           echo "######################################################"
           echo "samtools view -bSh -@ $num_threads ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam"
-          samtools view -bSh -@ $num_threads ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam
+          #samtools view -bSh -@ $num_threads ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam
           echo "samtools view -bSh -@ $num_threads ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam"
-          samtools view -bSh -@ $num_threads ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam
+          #samtools view -bSh -@ $num_threads ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam
          
           echo "#######################"
           echo "Sorting unique reads"
           echo "#######################"
           echo "samtools sort -@ $num_threads ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam"
-          samtools sort -@ $num_threads ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam
+          #samtools sort -@ $num_threads ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam
           echo "samtools sort -@ $num_threads ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam"
-          samtools sort -@ $num_threads ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam
+          #samtools sort -@ $num_threads ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam
          
           echo "########################"
           echo "Merging fwd and rev reads"
           echo "########################"
           echo "samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam"
-          samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
+          #samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
           
           if [ "$HAMR" != 0 ]; then
 	        echo "######################################################"
           echo "Resolving spliced alignments"
           echo "######################################################"
           echo "picard AddOrReplaceReadGroups I=${filename3}_merged.bam O=${filename3}_RG.bam ID=${filename3} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename3}"
-          picard AddOrReplaceReadGroups I=${filename3}_merged.bam O=${filename3}_RG.bam ID=${filename3} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename3}
+          #picard AddOrReplaceReadGroups I=${filename3}_merged.bam O=${filename3}_RG.bam ID=${filename3} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename3}
           echo "picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome"
-          picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome
+          #picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome
           echo "samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai"
-          samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai
+          #samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai
           echo "singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-          singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
+          #singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
 	  
 	        echo "######################################################"
           echo "Running HAMR"
           echo "######################################################"
 	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
-	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+	        #singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
           fi
-
-          tophat_mapping_lincRNA_annotation
-	        tophat_mapping_transcript_quantification
-
+          fi
+          fi
+          #tophat_mapping_lincRNA_annotation
+	        #tophat_mapping_transcript_quantification
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
               if [ "$seq_type" == "PE" ]; then
               echo "###################################"
@@ -624,11 +621,8 @@ paired_fastq_gz()
               fi
               star_mapping_lincRNA_annotation
 	            star_mapping_transcript_quantification
-
+          fi
           house_keeping
-          fi
-          fi
-          fi
 }
 paired_fq()
 {
