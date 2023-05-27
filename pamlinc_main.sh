@@ -91,7 +91,7 @@ while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:r:n:htsqemy:" opt; do
     star=$OPTARG # star
      ;;
     c)
-    sjdbOverhang=$OPTARG # need for star genome index building. Value is dependent on the read length of your fastq files (read length minus 1)
+    sjdbOverhang=$OPTARG # need for star genome index building. Value is dependent on the read length of your fastq files (sjdbOverhang = read length - 1)
      ;;
     f)
     genomeSAindexNbases=$OPTARG # needed for star genome index building. Default value is 14 but it should be scaled downed for small genomes, with a typical value of min(14, log2(GenomeLength)/2 - 1)
@@ -161,7 +161,7 @@ singularity pull docker://ncbi/sra-tools:3.0.0
 singularity pull docker://biocontainers/bowtie2:v2.4.1_cv1
 
 ###################################################################################################################
-# # pipeline house keeping - move output files into user input directory
+# # pipeline house keeping - move output files into user input directory; delete some intermediate output files
 ###################################################################################################################
 
 house_keeping()
@@ -172,12 +172,20 @@ house_keeping()
          rm "$gname".gtf
     fi
     if [ ! -z "$index_folder" ]; then
-        mv *.bt2 "$index_folder"
-        #mv star_index "$index_folder"
+          if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
+          mv *.bt2 "$index_folder"
+          elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
+          mv star_index "$index_folder"
+          rm *.tab *.out
+          fi
     elif [ -z "$index_folder" ]; then
-        mkdir index_folder
-        mv *.bt2 index_folder
-        #mv star_index "$pipeline_output"
+          if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
+          mkdir index_folder
+          mv *.bt2 index_folder && mv index_folder "$pipeline_output"
+          elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
+          mkdir index_folder && mv star_index index_folder
+          mv index_folder "$pipeline_output"
+          rm *.tab *.out
     fi
     if [ "$transcript_abun_quant" != 0 ]; then
         mkdir featurecount && mv *_featurecount.txt* featurecount
@@ -257,7 +265,7 @@ star_mapping_transcript_quantification()
         elif [ "$seq_type" == "SE" ]; then
         echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam"
         featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam
-        fi 
+        fi
       fi
 }
 
