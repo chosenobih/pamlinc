@@ -166,61 +166,62 @@ singularity pull docker://biocontainers/bowtie2:v2.4.1_cv1
 
 house_keeping()
 {
-    mkdir intermediate_files
-    mkdir trimmomatic_output
-    if [ -e "./$gname.gtf" ]; then
-         rm "$gname".gtf
-    fi
-    if [ ! -z "$index_folder" ]; then
-          if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
-          mv *.bt2 "$index_folder"
-          elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
-          mv star_index "$index_folder"
-          rm *.tab *.out
-          fi
-    elif [ -z "$index_folder" ]; then
-          if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
-          mkdir index_folder
-          mv *.bt2 index_folder && mv index_folder "$pipeline_output"
-          elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
-          mkdir index_folder && mv star_index index_folder
-          mv index_folder "$pipeline_output"
-          rm *.tab *.out
-    fi
-    if [ "$transcript_abun_quant" != 0 ]; then
-        mkdir featurecount && mv *_featurecount.txt* featurecount
-        mkdir transcript_abund_quant && mv featurecount transcript_abund_quant
-        mv transcript_abund_quant "$pipeline_output"
-    fi
-    if [ "$evolinc_i" != 0 ]; then
-        rm *.loci *.stats *.tracking
-        mv *_lincRNA* "$pipeline_output"
-    fi
-    if [ "$HAMR" != 0 ]; then
-        mv *_HAMR* "$pipeline_output"
-        mv *.bai intermediate_files
-        rm "$gname".fa.fai "$gname".dict
-    fi
-    if [ "$tophat" != 0 ]; then
-        mkdir mapped_files
-        mv *_tophat* mapped_files
-        mv mapped_files "$pipeline_output"
-    fi
-    if [ "$seq_type" == "SE" ]; then
-        mv *_trimmed.* trimmomatic_output
-    elif [ "$seq_type" == "PE" ]; then
-        mv *_1P.* *_1U.* *_2P.* *_2U.* trimmomatic_output
-    fi
-    mv trimmomatic_output "$pipeline_output"
-  
-    mv *.bam intermediate_files
-    mv *.sam intermediate_files
-    mv *.gtf intermediate_files
-    mv intermediate_files "$pipeline_output"
-    rm *.sif
-    echo "##############################"
-    echo "Pipeline executed successfully"
-    echo "##############################"
+      mkdir intermediate_files
+      mkdir trimmomatic_output
+      if [ -e "./$gname.gtf" ]; then
+          rm "$gname".gtf
+      fi
+      if [ ! -z "$index_folder" ]; then
+            if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
+            mv *.bt2 "$index_folder"
+            elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
+            mv star_index "$index_folder"
+            rm *.tab *.out
+            fi
+      elif [ -z "$index_folder" ]; then
+            if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
+            mkdir index_folder
+            mv *.bt2 index_folder && mv index_folder "$pipeline_output"
+            elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
+            mkdir index_folder && mv star_index index_folder
+            mv index_folder "$pipeline_output"
+            rm *.tab *.out
+            fi
+      fi
+      if [ "$transcript_abun_quant" != 0 ]; then
+          mkdir featurecount && mv *_featurecount.txt* featurecount
+          mkdir transcript_abund_quant && mv featurecount transcript_abund_quant
+          mv transcript_abund_quant "$pipeline_output"
+      fi
+      if [ "$evolinc_i" != 0 ]; then
+          rm *.loci *.stats *.tracking
+          mv *_lincRNA* "$pipeline_output"
+      fi
+      if [ "$HAMR" != 0 ]; then
+          mv *_HAMR* "$pipeline_output"
+          mv *.bai intermediate_files
+          mv *.sam intermediate_files
+          rm "$gname".fa.fai "$gname".dict
+      fi
+      if [ "$tophat" != 0 ]; then
+          mkdir mapped_files
+          mv *_tophat* mapped_files
+          mv mapped_files "$pipeline_output"
+      fi
+      if [ "$seq_type" == "SE" ]; then
+          mv *_trimmed.* trimmomatic_output
+      elif [ "$seq_type" == "PE" ]; then
+          mv *_1P.* *_1U.* *_2P.* *_2U.* trimmomatic_output
+      fi
+      mv trimmomatic_output "$pipeline_output"
+    
+      mv *.bam intermediate_files
+      mv *.gtf intermediate_files
+      mv intermediate_files "$pipeline_output"
+      rm *.sif
+      echo "##############################"
+      echo "Pipeline executed successfully"
+      echo "##############################"
 }
 	
 ##################################################################################################################
@@ -243,11 +244,11 @@ tophat_mapping_transcript_quantification()
             fi 
         elif [ "$evolinc_i" !== 0 ]; then
             if [ "$seq_type" == "PE" ]; then
-            echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
-            featureCounts -p -T $num_threads -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_merged.bam
+            echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
+            featureCounts -p -T $num_threads -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam
             elif [ "$seq_type" == "SE" ]; then
-            echo "featureCounts -T $num_threads -s $strandedness -a ./${filename}_lincRNA/${filename}.lincRNA.updated.gtf -o ${filename}_featurecount.txt ${filename}_sorted.bam"
-            featureCounts -T $num_threads -s $strandedness -a ./${filename}_lincRNA/${filename}.lincRNA.updated.gtf -o ${filename}_featurecount.txt ${filename}_sorted.bam
+            echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_sorted.bam"
+            featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_sorted.bam
             fi 
         fi
       fi
@@ -258,13 +259,23 @@ star_mapping_transcript_quantification()
       if [ "$transcript_abun_quant" != 0 ]; then
       echo "###########################################################################"
       echo "Running featureCounts to quantify transcript"
-      echo "###########################################################################"    
-        if [ "$seq_type" == "PE" ]; then
-        echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam"
-        featureCounts -p -T $num_threads -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam
-        elif [ "$seq_type" == "SE" ]; then
-        echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam"
-        featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam
+      echo "###########################################################################"    6
+        if [ "$evolinc_i" != 0 ]; then
+            if [ "$seq_type" == "PE" ]; then
+            echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam"
+            featureCounts -p -T $num_threads -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam
+            elif [ "$seq_type" == "SE" ]; then
+            echo "featureCounts -T $num_threads -s $strandedness -a ./${filename}_lincRNA/${filename}.lincRNA.updated.gtf -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam"
+            featureCounts -T $num_threads -s $strandedness -a ./${filename}_lincRNA/${filename}.lincRNA.updated.gtf -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam
+            fi
+        elif [ "$evolinc_i" !== 0 ]; then
+            if [ "$seq_type" == "PE" ]; then
+            echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam"
+            featureCounts -p -T $num_threads -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam
+            elif [ "$seq_type" == "SE" ]; then
+            echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam"
+            featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam
+            fi
         fi
       fi
 }
@@ -285,11 +296,11 @@ sra_id_transcript_quantification()
             fi
         elif [ "$evolinc_i" !== 0 ]; then
             if [ "$seq_type" == "PE" ]; then
-            echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
-            featureCounts -p -T $num_threads -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
+            echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
+            featureCounts -p -T $num_threads -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
             elif [ "$seq_type" == "SE" ]; then
-            echo "featureCounts -T $num_threads -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam"
-            featureCounts -T $num_threads -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam
+            echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam"
+            featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam
             fi
         fi
       fi
@@ -367,15 +378,15 @@ star_mapping_lincRNA_annotation()
             fi   
         elif [ "$seq_type" == "SE" ]; then
             if [ "$lib_type" == fr-secondstrand ]; then      
-            echo "stringtie ${filename}.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr"
-            stringtie ${filename}.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr
+            echo "stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr"
+            stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr
             echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
             cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
             echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA"
             singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA
             elif [ "$lib_type" == fr-firststrand ]; then
-            echo "stringtie ${filename}.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf"
-            stringtie ${filename}.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf
+            echo "stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf"
+            stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf
             echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
             cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
             echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA"
@@ -845,66 +856,85 @@ single_end()
           echo "######################"
           
           echo "trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-          #trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
           fi
           
           if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
-          if [ "$seq_type" == "SE" ]; then
-          echo "###################################"
-          echo "Running tophat2 in single end mode"
-          echo "###################################"
-          
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation $fbname ${filename}_trimmed.${extension}"
-          #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation $fbname ${filename}_trimmed.${extension}
+              if [ "$seq_type" == "SE" ]; then
+              echo "###################################"
+              echo "Running tophat2 in single end mode"
+              echo "###################################"
+              
+              echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation $fbname ${filename}_trimmed.${extension}"
+              #singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation $fbname ${filename}_trimmed.${extension}
+            
+              echo "########################"
+              echo "Converting .bam to .sam"
+              echo "########################"
+              echo "samtools view -h -@ $num_threads -o ${filename}.sam ${filename}_tophat/accepted_hits.bam"
+              #samtools view -h -@ $num_threads -o ${filename}.sam ${filename}_tophat/accepted_hits.bam
+                      
+              echo "#######################"
+              echo "Grepping unique reads"
+              echo "#######################"
+              echo "grep -P '^\@|NH:i:1$' ${filename}.sam > ${filename}_unique.sam"
+              #grep -P '^\@|NH:i:1$' ${filename}.sam > ${filename}_unique.sam
+              
+              echo "######################################################"
+              echo "Converting .sam to .bam before running samtools sort"
+              echo "######################################################"
+              echo "samtools view -bSh -@ $num_threads ${filename}_unique.sam > ${filename}_unique.bam"
+              #samtools view -bSh -@ $num_threads ${filename}_unique.sam > ${filename}_unique.bam
+              
+              echo "#######################"
+              echo "Sorting unique reads"
+              echo "#######################"
+              echo "samtools sort -@ $num_threads ${filename}_unique.bam > ${filename}_sorted.bam"
+              #samtools sort -@ $num_threads ${filename}_unique.bam > ${filename}_sorted.bam
+              
+              if [ "$HAMR" != 0 ]; then
+              echo "######################################################"
+              echo "Resolving spliced alignments"
+              echo "######################################################"
+              echo "picard AddOrReplaceReadGroups I=${filename}_sorted.bam O=${filename}_RG.bam ID=${filename} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename}"
+              #picard AddOrReplaceReadGroups I=${filename}_sorted.bam O=${filename}_RG.bam ID=${filename} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename}
+              echo "picard ReorderSam I=${filename}_RG.bam O=${filename}_RGO.bam R=$referencegenome"
+              #picard ReorderSam I=${filename}_RG.bam O=${filename}_RGO.bam R=$referencegenome
+              echo "samtools index ${filename}_RGO.bam ${sra_id}_RGO.bam.bai"
+              #samtools index ${filename}_RGO.bam ${filename}_RGO.bam.bai
+              echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename}_RGO.bam -o ${filename}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
+              #singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename}_RGO.bam -o ${filename}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
         
-          echo "########################"
-          echo "Converting .bam to .sam"
-          echo "########################"
-          echo "samtools view -h -@ $num_threads -o ${filename}.sam ${filename}_tophat/accepted_hits.bam"
-          #samtools view -h -@ $num_threads -o ${filename}.sam ${filename}_tophat/accepted_hits.bam
-                   
-          echo "#######################"
-          echo "Grepping unique reads"
-          echo "#######################"
-          echo "grep -P '^\@|NH:i:1$' ${filename}.sam > ${filename}_unique.sam"
-          #grep -P '^\@|NH:i:1$' ${filename}.sam > ${filename}_unique.sam
-           
-          echo "######################################################"
-          echo "Converting .sam to .bam before running samtools sort"
-          echo "######################################################"
-          echo "samtools view -bSh -@ $num_threads ${filename}_unique.sam > ${filename}_unique.bam"
-          #samtools view -bSh -@ $num_threads ${filename}_unique.sam > ${filename}_unique.bam
+              echo "######################################################"
+              echo "Running HAMR"
+              echo "######################################################"
+              echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05"
+              #singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05
+              fi
+              #tophat_mapping_lincRNA_annotation
+              #tophat_mapping_transcript_quantification
+              fi
           
-          echo "#######################"
-          echo "Sorting unique reads"
-          echo "#######################"
-          echo "samtools sort -@ $num_threads ${filename}_unique.bam > ${filename}_sorted.bam"
-          #samtools sort -@ $num_threads ${filename}_unique.bam > ${filename}_sorted.bam
-          
-          if [ "$HAMR" != 0 ]; then
-	        echo "######################################################"
-          echo "Resolving spliced alignments"
-          echo "######################################################"
-          echo "picard AddOrReplaceReadGroups I=${filename}_sorted.bam O=${filename}_RG.bam ID=${filename} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename}"
-          #picard AddOrReplaceReadGroups I=${filename}_sorted.bam O=${filename}_RG.bam ID=${filename} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename}
-          echo "picard ReorderSam I=${filename}_RG.bam O=${filename}_RGO.bam R=$referencegenome"
-          #picard ReorderSam I=${filename}_RG.bam O=${filename}_RGO.bam R=$referencegenome
-          echo "samtools index ${filename}_RGO.bam ${sra_id}_RGO.bam.bai"
-          #samtools index ${filename}_RGO.bam ${filename}_RGO.bam.bai
-          echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename}_RGO.bam -o ${filename}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-          #singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename}_RGO.bam -o ${filename}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
-	  
-	        echo "######################################################"
-          echo "Running HAMR"
-          echo "######################################################"
-	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05"
-          #singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05
+          elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
+                if [ "$seq_type" == "SE" ]; then
+                    if [[ "$extension" =~ "fq.gz" ]]; then
+                    echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename}_ --readFilesIn ${filename}_trimmed.${extension}"
+                    STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename}_ --readFilesIn ${filename}_trimmed.${extension}
+                    elif [[ "$extension" =~ "fastq.gz" ]]; then
+                    echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename}_ --readFilesIn ${filename}_trimmed.${extension}"
+                    STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename}_ --readFilesIn ${filename}_trimmed.${extension}
+                    elif [[ "$extension" =~ "fq" ]]; then
+                    echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --genomeDir ./star_index --outFileNamePrefix ${filename}_ --readFilesIn ${filename}_trimmed.${extension}"
+                    STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --genomeDir ./star_index --outFileNamePrefix ${filename}_ --readFilesIn ${filename}_trimmed.${extension}
+                    elif [[ "$extension" =~ "fastq" ]]; then
+                    echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --genomeDir ./star_index --outFileNamePrefix ${filename}_ --readFilesIn ${filename}_trimmed.${extension}"
+                    STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --genomeDir ./star_index --outFileNamePrefix ${filename}_ --readFilesIn ${filename}_trimmed.${extension}
+                    fi
+                fi
+                star_mapping_lincRNA_annotation
+                star_mapping_transcript_quantification
           fi
-          #tophat_mapping_lincRNA_annotation
-	        tophat_mapping_transcript_quantification
-          fi
-          fi
-          house_keeping
+          #house_keeping
 }
 
 #############################################################################################################################################################################################################################
