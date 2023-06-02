@@ -103,7 +103,7 @@ bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SE -y "SE
 Running pamlinc in paired-end mode with an SRA-ID
 ```
 #download genome file and annotattion files for A. thaliana from cyverse data store
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10_genome.fa
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10_genome.fa\
 wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10.gff3
 ```
 
