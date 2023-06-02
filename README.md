@@ -11,7 +11,7 @@
   2. Reference annotation (GTF/GFF3)
   3. RNA-Seq reads (FASTQ) - Paired end or Single end or NCBI SRA ID.
 * Optional files:
-    The -i flag allows users to provide a reference genome index folder which should contain the genome index files for either bowtie2, STAR or both, depending on the user's aligner of choice. The STAR index folder should be named 'star_index' and it should be a subdirectory of the reference genome index folder provided. PAMLINC automatically generates the reference genome index files for both bowtie2 and STAR when it is not provided by the user but this increases the run time of PAMLINC.
+    The -i flag allows users to provide a reference genome index folder which should contain the genome index files for either bowtie2, STAR or both, depending on the user's aligner of choice. The STAR index folder should be named 'star_index' and it should be a subdirectory of the reference genome index folder provided. PAMLINC automatically generates the reference genome index files for both bowtie2 and STAR when it is not provided by the user, but this increases the run time of PAMLINC.
 * Output: When run with all three flags (-h, -e, -t), PAMLINC generates six folders in the output directory. The folders are <sample_name>_HAMR, <sample_name>_lincRNA, intermediate_files, mapped_files, transcript_abund_quant and trimmomatic_output
 
 
@@ -64,36 +64,49 @@ conda activate pamlinc_env
 bash setup_script.sh
 ```
 ```
-#download genome file from CyVerse data store
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10_genome.fa
+#download genome file for sorghum bicolor from CyVerse data store
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.fa
 ```
 ```
-#download genome annotation file from CyVerse data store
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10.gff3
+#download genome annotation file for sorghum bicolor from CyVerse data store
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.gtf
 ```
-
+```
+#download reference genome index  files from google drive
+https://drive.google.com/drive/folders/1EazCZ1__K7DCKbOOYoQ8jeqj3Tpb9KrR?usp=drive_link
+```
 Running pamlinc in paired-end mode with a fastq file
 ```
 #download sample data from CyVerse data store:
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/ERR3333443_sampled_R1.fastq.gz
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/ERR3333443_sampled_R2.fastq.gz
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sampled_1_R1.fastq.gz
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sampled_1_R2.fastq.gz
 ```
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result -y "PE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 ERR3333443_sampled_R1.fastq.gz -2 ERR3333443_sampled_R2.fastq.gz
+bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_PE -y "PE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz -i index_folder
+```
+```
+#download sample run result from google drive
+https://drive.google.com/drive/folders/1A4CuPfrvX0oBw2cmqn8wOBI9_rMWdds0?usp=drive_link
 ```
 
 Running pamlinc in single-end mode with a fastq file
 ```
 #download sample data from CyVerse data store:
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/SRR3581899_sampled_R1.fastq.gz
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sampled_1_SE.fastq.gz
 ```
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result_SE -y "SE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz
+bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SE -y "SE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -u sample_1_SE.fastq.gz -i index_folder
 ```
 
 Running pamlinc in paired-end mode with an SRA-ID
+```
+#download genome file and annotattion files for A. thaliana from cyverse data store
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10_genome.fa
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10.gff3
+```
+
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
 bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result_SRA-ID_PE -t -y "PE" -p 6 -S ERR3333443 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12
