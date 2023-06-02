@@ -25,7 +25,7 @@ PAMLINC command line arguments and description
 | -l            | library type  (library type can be fr-unstranded, fr-firststrand or fr-secondstrand)                        |
 | -1            | read_1                                                                                                      |
 | -2            | read_2                                                                                                      |
-| -u            | single_reads                                                                                                |
+| -u            | single_read                                                                                                |
 | -o            | output directory                                                                                            |
 | -S            | NCBI SRA-ID #upper case S                                                                                   |
 | -p            | number of threads                                                                                           |
