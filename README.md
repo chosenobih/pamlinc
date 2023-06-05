@@ -69,10 +69,10 @@ wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor
 ```
 ```
 #download genome annotation file for sorghum bicolor from CyVerse data store
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.gtf
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.gff3
 ```
 ```
-#download reference genome index  files from google drive
+#download reference sbicolor genome index files for bowtie-2 from google drive
 https://drive.google.com/drive/folders/1EazCZ1__K7DCKbOOYoQ8jeqj3Tpb9KrR?usp=drive_link
 ```
 Running pamlinc in paired-end mode with a fastq file
@@ -102,18 +102,12 @@ bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SE -y "SE
 
 Running pamlinc in paired-end mode with an SRA-ID
 ```
-#download genome file and annotattion files for A. thaliana from cyverse data store
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10_genome.fa\
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/Arabidopsis_thaliana_TAIR10.gff3
-```
-
-```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result_SRA-ID_PE -t -y "PE" -p 6 -S ERR3333443 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12
+bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SRA-ID_PE -t -y "PE" -p 6 -S SRR18095197 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -i index_folder
 ```
 
 Running pamlinc in single-end mode with an SRA-ID
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a Arabidopsis_thaliana_TAIR10.gff3 -g Arabidopsis_thaliana_TAIR10_genome.fa -o pamlinc_result_SRA-ID_SE -t -y "SE" -p 6 -S SRR3581899 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12
+bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SRA-ID_SE -t -y "SE" -p 6 -S SRR10376271 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -i index_folder
 ```
