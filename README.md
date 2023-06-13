@@ -25,7 +25,7 @@ PAMLINC command line arguments and description
 | -l            | library type  (library type can be fr-unstranded, fr-firststrand or fr-secondstrand)                        |
 | -1            | read_1                                                                                                      |
 | -2            | read_2                                                                                                      |
-| -u            | single_read                                                                                                |
+| -u            | single_read                                                                                                 |
 | -o            | output directory                                                                                            |
 | -S            | NCBI SRA-ID #upper case S                                                                                   |
 | -p            | number of threads                                                                                           |
@@ -72,32 +72,42 @@ wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor
 wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.gff3
 ```
 ```
-#download reference sbicolor genome index files for bowtie-2 from google drive
-https://drive.google.com/drive/folders/1EazCZ1__K7DCKbOOYoQ8jeqj3Tpb9KrR?usp=drive_link
+#download sbicolor genome index files for bowtie-2 from google drive. Copy the link and paste it into your browser.
+https://drive.google.com/drive/folders/1EazCZ1__K7DCKbOOYoQ8jeqj3Tpb9KrR?usp=sharing
 ```
 Running pamlinc in paired-end mode with a fastq file
 ```
 #download sample data from CyVerse data store:
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sampled_1_R1.fastq.gz
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sampled_1_R2.fastq.gz
+#R1
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1_R1.fastq.gz
 ```
+```
+#download sample data from CyVerse data store:
+#R2
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1_R2.fastq.gz
+```
+
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
 bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_PE -y "PE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz -i index_folder
 ```
 ```
-#download sample run result from google drive
-https://drive.google.com/drive/folders/1A4CuPfrvX0oBw2cmqn8wOBI9_rMWdds0?usp=drive_link
+#download paired-end sample run output from google drive. Copy the link and paste it into your browser.
+https://drive.google.com/drive/folders/1A4CuPfrvX0oBw2cmqn8wOBI9_rMWdds0?usp=sharing
 ```
 
 Running pamlinc in single-end mode with a fastq file
 ```
 #download sample data from CyVerse data store:
-wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sampled_1_SE.fastq.gz
+wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1_SE.fastq.gz
 ```
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
 bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SE -y "SE" -p 6 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -u sample_1_SE.fastq.gz -i index_folder
+```
+```
+#download single-end sample run output from google drive. Copy the link and paste it into your browser.
+https://drive.google.com/drive/folders/1iLB7Gec9qB6Sv2TyFlHM_GG3HQ7wPWa9?usp=sharing
 ```
 
 Running pamlinc in paired-end mode with an SRA-ID
