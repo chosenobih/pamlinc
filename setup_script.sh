@@ -8,6 +8,7 @@ conda config --add channels bioconda
 #install conda packages
 echo "installing packages required to run pamlinc"
 
+conda install fastp==0.23.4 -c bioconda -y
 conda install star==2.7.10a -c bioconda -y
 conda install trimmomatic==0.35 -c bioconda -y
 conda install gffread==0.12.1 -c bioconda -y
