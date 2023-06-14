@@ -4,7 +4,7 @@
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -c sjdbOverhang -f genomeSAindexNbases -q transcript_abundance_quantification -e evolinc_i -m HAMR -r gene_attribute -n strandedness -k feature_type"
+      echo "Usage : sh $0 -g <reference_genome>  -a <reference_annotation> -i <index_folder> -l lib_type {-1 <left_reads> -2 <right_reads> | -u <single_reads> | -S <sra_id>} -o <output_folder for pipeline files> -p num_threads -d reads_mismatches -t tophat -s star -w trimmomatic -x fastp -c sjdbOverhang -f genomeSAindexNbases -q transcript_abundance_quantification -e evolinc_i -m HAMR -r gene_attribute -n strandedness -k feature_type"
       echo ""
 
 cat <<'EOF'
@@ -25,6 +25,8 @@ cat <<'EOF'
   -q transcript abundance quantification
   -t tophat2 mapping #needed if you want to run HAMR
   -s star mapping #deactivates tophat2 and HAMR
+  -w use trimmomatic for trimming reads
+  -x use fastp for trimming reads #deactivates trimmomatic
   -c sjdbOverhang #value is dependent on the read length of your fastq files (read length minus 1)
   -f genomeSAindexNbases #default value is 14 but it should be scaled downed for small genomes, with a typical value of min(14, log2(GenomeLength)/2 - 1)
   -y type of reads (single end or paired end) #denoted as "SE" or "PE", include double quotation on command line
@@ -38,6 +40,8 @@ EOF
     exit 0
 }
 
+trimmomatic=0
+fastp=0
 star=0
 tophat=0
 referencegenome=0
@@ -46,7 +50,7 @@ HAMR=0
 evolinc_i=0
 transcript_abun_quant=0
 
-while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:r:n:htsqemy:" opt; do
+while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:c:f:r:n:htswxqemy:" opt; do
   case $opt in
     g)
     referencegenome=$OPTARG # Reference genome file
@@ -92,6 +96,12 @@ while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:r:n:htsqemy:" opt; do
      ;;
     s)
     star=$OPTARG # star
+     ;;
+    w)
+    trimmomatic=$OPTARG # trimmomatic
+     ;;
+    x)
+    fastp=$OPTARG # fastp
      ;;
     c)
     sjdbOverhang=$OPTARG # need for star genome index building. Value is dependent on the read length of your fastq files (sjdbOverhang = read length - 1)
@@ -172,16 +182,29 @@ singularity pull docker://biocontainers/bowtie2:v2.4.1_cv1
 house_keeping()
 {
       mkdir intermediate_files
-      mkdir trimmomatic_output
       if [ -e "./$gname.gtf" ]; then
           rm "$gname".gtf
       fi
-      if [ "$seq_type" == "SE" ]; then
-          mv *_trimmed.* trimmomatic_output
-      else
-          mv *_1P.* *_1U.* *_2P.* *_2U.* trimmomatic_output
+
+      if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+            mkdir trimmomatic_output
+            if [ "$seq_type" == "SE" ]; then
+                mv *_trimmed.* trimmomatic_output
+            else
+                mv *_1P.* *_1U.* *_2P.* *_2U.* trimmomatic_output
+            fi
+            mv trimmomatic_output "$pipeline_output"
+
+      elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+            mkdir fastp_output
+            if [ "$seq_type" == "SE" ]; then
+                mv *_fastp.* *_trimmed.* fastp_output
+            else
+                mv *_fastp.* *_trimmed_* fastp_output
+            
+            fi
+            mv fastp_output "$pipeline_output"
       fi
-      mv trimmomatic_output "$pipeline_output"
 
       if [ ! -z "$index_folder" ]; then
             if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
@@ -459,25 +482,35 @@ paired_fq_gz()
     filename3=$(echo $filename | sed 's/_R1//')
           
           if [ "$seq_type" == "PE" ]; then
-          echo "######################"
-          echo "Trimming input read(s)"
-          echo "######################"
-          
-          echo "trimmomatic PE -threads $num_threads ${filename}.fq.gz ${filename2}.fq.gz ${filename3}_1P.fq.gz ${filename3}_1U.fq.gz ${filename3}_2P.fq.gz ${filename3}_2U.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-          trimmomatic PE -threads $num_threads ${filename}.fq.gz ${filename2}.fq.gz ${filename3}_1P.fq.gz ${filename3}_1U.fq.gz ${filename3}_2P.fq.gz ${filename3}_2U.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          echo "###############################"
+          echo "Trimming paired-end input reads"
+          echo "###############################"
           fi
-          
+          if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                echo "trimmomatic PE -threads $num_threads ${filename}.fq.gz ${filename2}.fq.gz ${filename3}_1P.fq.gz ${filename3}_1U.fq.gz ${filename3}_2P.fq.gz ${filename3}_2U.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                trimmomatic PE -threads $num_threads ${filename}.fq.gz ${filename2}.fq.gz ${filename3}_1P.fq.gz ${filename3}_1U.fq.gz ${filename3}_2P.fq.gz ${filename3}_2U.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                  echo "fastp -w $num_threads -i ${filename}.fq.gz -I ${filename2}.fq.gz -o ${filename3}_trimmed_R1.fq.gz -O ${filename3}_trimmed_R2.fq.gz -j ${filename3}_fastp.json -h ${filename3}_fastp.html"
+                  fastp -w $num_threads -i ${filename}.fq.gz -I ${filename2}.fq.gz -o ${filename3}_trimmed_R1.fq.gz -O ${filename3}_trimmed_R2.fq.gz -j ${filename3}_fastp.json -h ${filename3}_fastp.html
+          fi
+
           if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
           echo "###################################"
           echo "Running tophat2 in paired end mode"
           echo "###################################"
-          
-          if [ "$seq_type" == "PE" ]; then
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq.gz,${filename3}_1U.fq.gz"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq.gz,${filename3}_1U.fq.gz
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq.gz"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq.gz
-         
+                if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                      echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq.gz,${filename3}_1U.fq.gz"
+                      singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq.gz,${filename3}_1U.fq.gz
+                      echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq.gz"
+                      singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq.gz
+                      
+                elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fq.gz"
+                        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fq.gz
+                        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fq.gz"
+                        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fq.gz
+                fi
+
           echo "########################"
           echo "Converting .bam to .sam"
           echo "########################"
@@ -537,13 +570,20 @@ paired_fq_gz()
           tophat_mapping_lincRNA_annotation
 	        tophat_mapping_transcript_quantification
           fi
-          fi
+          
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
-              echo "###################################"
-              echo "Running STAR in paired end mode"
-              echo "###################################"
-              echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq.gz ${filename3}_2P.fq.gz"
-              STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq.gz ${filename3}_2P.fq.gz
+          echo "###################################"
+          echo "Running STAR in paired end mode"
+          echo "###################################"
+              if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                    echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq.gz ${filename3}_2P.fq.gz"
+                    STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq.gz ${filename3}_2P.fq.gz
+              elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                      echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_trimmed_R1.fq.gz ${filename3}_trimmed_R2.fq.gz"
+                      STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_trimmed_R1.fq.gz ${filename3}_trimmed_R2.fq.gz
+              fi
+              star_mapping_lincRNA_annotation
+              star_mapping_transcript_quantification
           fi
           house_keeping
 }
@@ -555,25 +595,35 @@ paired_fastq_gz()
     filename3=$(echo $filename | sed 's/_R1//')
           
           if [ "$seq_type" == "PE" ]; then
-          echo "######################"
-          echo "Trimming input read(s)"
-          echo "######################"
-          
-          echo "trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-          trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          echo "###############################"
+          echo "Trimming paired-end input reads"
+          echo "###############################"
           fi
-          
+          if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                echo "trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                  echo "fastp -w $num_threads -i ${filename}.fastq.gz -I ${filename2}.fastq.gz -o ${filename3}_trimmed_R1.fastq.gz -O ${filename3}_trimmed_R2.fastq.gz -j ${filename3}_fastp.json -h ${filename3}_fastp.html"
+                  fastp -w $num_threads -i ${filename}.fastq.gz -I ${filename2}.fastq.gz -o ${filename3}_trimmed_R1.fastq.gz -O ${filename3}_trimmed_R2.fastq.gz -j ${filename3}_fastp.json -h ${filename3}_fastp.html
+          fi
+
           if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
           echo "###################################"
           echo "Running tophat2 in paired end mode"
           echo "###################################"
-          
-          if [ "$seq_type" == "PE" ]; then
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz
-        
+                if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                      echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
+                      singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
+                      echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz"
+                      singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz
+                      
+                elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fastq.gz"
+                        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fastq.gz
+                        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fastq.gz"
+                        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fastq.gz
+                fi
+
           echo "########################"
           echo "Converting .bam to .sam"
           echo "########################"
@@ -631,18 +681,23 @@ paired_fastq_gz()
 	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
 	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
           fi
-          fi
-          fi
           tophat_mapping_lincRNA_annotation
 	        tophat_mapping_transcript_quantification
+          fi
+
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
-              echo "###################################"
-              echo "Running STAR in paired end mode"
-              echo "###################################"
-              echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fastq.gz ${filename3}_2P.fastq.gz"
-              STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fastq.gz ${filename3}_2P.fastq.gz
+          echo "###################################"
+          echo "Running STAR in paired end mode"
+          echo "###################################"
+              if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                    echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fastq.gz ${filename3}_2P.fastq.gz"
+                    STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fastq.gz ${filename3}_2P.fastq.gz
+              elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                      echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_trimmed_R1.fastq.gz ${filename3}_trimmed_R2.fastq.gz"
+                      STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_trimmed_R1.fastq.gz ${filename3}_trimmed_R2.fastq.gz
+              fi
               star_mapping_lincRNA_annotation
-	            star_mapping_transcript_quantification
+              star_mapping_transcript_quantification
           fi
           house_keeping
 }
@@ -651,27 +706,37 @@ paired_fq()
     filename=$(basename "$f" ".fq")
     filename2=${filename/_R1/_R2}
     filename3=$(echo $filename | sed 's/_R1//')
-          
+
           if [ "$seq_type" == "PE" ]; then
-          echo "######################"
-          echo "Trimming input read(s)"
-          echo "######################"
-          
-          echo "trimmomatic PE -threads $num_threads ${filename}.fq ${filename2}.fq ${filename3}_1P.fq ${filename3}_1U.fq ${filename3}_2P.fq ${filename3}_2U.fq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-          trimmomatic PE -threads $num_threads ${filename}.fq ${filename2}.fq ${filename3}_1P.fq ${filename3}_1U.fq ${filename3}_2P.fq ${filename3}_2U.fq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          echo "###############################"
+          echo "Trimming paired-end input reads"
+          echo "###############################"
           fi
-          
+          if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                echo "trimmomatic PE -threads $num_threads ${filename}.fq ${filename2}.fq ${filename3}_1P.fq ${filename3}_1U.fq ${filename3}_2P.fq ${filename3}_2U.fq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                trimmomatic PE -threads $num_threads ${filename}.fq ${filename2}.fq ${filename3}_1P.fq ${filename3}_1U.fq ${filename3}_2P.fq ${filename3}_2U.fq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                  echo "fastp -w $num_threads -i ${filename}.fq -I ${filename2}.fq -o ${filename3}_trimmed_R1.fq -O ${filename3}_trimmed_R2.fq -j ${filename3}_fastp.json -h ${filename3}_fastp.html"
+                  fastp -w $num_threads -i ${filename}.fq -I ${filename2}.fq -o ${filename3}_trimmed_R1.fq -O ${filename3}_trimmed_R2.fq -j ${filename3}_fastp.json -h ${filename3}_fastp.html
+          fi
+
           if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
           echo "###################################"
           echo "Running tophat2 in paired end mode"
           echo "###################################"
-          
-          if [ "$seq_type" == "PE" ]; then
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq,${filename3}_1U.fq"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq,${filename3}_1U.fq
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq
-        
+                if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                      echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq,${filename3}_1U.fq"
+                      singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq,${filename3}_1U.fq
+                      echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq"
+                      singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fq
+                      
+                elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fq"
+                        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fq
+                        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fq"
+                        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fq
+                fi
+
           echo "########################"
           echo "Converting .bam to .sam"
           echo "########################"
@@ -728,19 +793,24 @@ paired_fq()
           echo "######################################################"
 	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
 	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+          fi
           tophat_mapping_lincRNA_annotation
 	        tophat_mapping_transcript_quantification
           fi
-          fi
-          fi
+
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
-              echo "###################################"
-              echo "Running STAR in paired end mode"
-              echo "###################################"
-              echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq ${filename3}_2P.fq"
-              STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq ${filename3}_2P.fq
+          echo "###################################"
+          echo "Running STAR in paired end mode"
+          echo "###################################"
+              if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                    echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq ${filename3}_2P.fq"
+                    STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq ${filename3}_2P.fq
+              elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                      echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_trimmed_R1.fq ${filename3}_trimmed_R2.fq"
+                      STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_trimmed_R1.fq ${filename3}_trimmed_R2.fq
+              fi
               star_mapping_lincRNA_annotation
-	            star_mapping_transcript_quantification
+              star_mapping_transcript_quantification
           fi
           house_keeping
 }
@@ -750,27 +820,37 @@ paired_fastq()
     filename=$(basename "$f" ".fastq")
     filename2=${filename/_R1/_R2}
     filename3=$(echo $filename | sed 's/_R1//')
-          
+
           if [ "$seq_type" == "PE" ]; then
-          echo "######################"
-          echo "Trimming input read(s)"
-          echo "######################"
-          
-          echo "trimmomatic PE -threads $num_threads ${filename}.fastq ${filename2}.fastq ${filename3}_1P.fastq ${filename3}_1U.fastq ${filename3}_2P.fastq ${filename3}_2U.fastq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-          trimmomatic PE -threads $num_threads ${filename}.fastq ${filename2}.fastq ${filename3}_1P.fastq ${filename3}_1U.fastq ${filename3}_2P.fastq ${filename3}_2U.fastq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          echo "###############################"
+          echo "Trimming paired-end input reads"
+          echo "###############################"
           fi
-          
+          if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                echo "trimmomatic PE -threads $num_threads ${filename}.fastq ${filename2}.fastq ${filename3}_1P.fastq ${filename3}_1U.fastq ${filename3}_2P.fastq ${filename3}_2U.fastq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                trimmomatic PE -threads $num_threads ${filename}.fastq ${filename2}.fastq ${filename3}_1P.fastq ${filename3}_1U.fastq ${filename3}_2P.fastq ${filename3}_2U.fastq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                  echo "fastp -w $num_threads -i ${filename}.fastq -I ${filename2}.fastq -o ${filename3}_trimmed_R1.fastq -O ${filename3}_trimmed_R2.fastq -j ${filename3}_fastp.json -h ${filename3}_fastp.html"
+                  fastp -w $num_threads -i ${filename}.fastq -I ${filename2}.fastq -o ${filename3}_trimmed_R1.fastq -O ${filename3}_trimmed_R2.fastq -j ${filename3}_fastp.json -h ${filename3}_fastp.html
+          fi
+
           if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
           echo "###################################"
           echo "Running tophat2 in paired end mode"
           echo "###################################"
-          
-          if [ "$seq_type" == "PE" ]; then
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq,${filename3}_1U.fastq"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq,${filename3}_1U.fastq
-          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq"
-          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq
-        
+                if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                      echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq,${filename3}_1U.fastq"
+                      singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq,${filename3}_1U.fastq
+                      echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq"
+                      singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq
+                      
+                elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fastq"
+                        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fastq
+                        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fastq"
+                        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fastq
+                fi
+
           echo "########################"
           echo "Converting .bam to .sam"
           echo "########################"
@@ -827,19 +907,24 @@ paired_fastq()
           echo "######################################################"
 	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
 	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+          fi
           tophat_mapping_lincRNA_annotation
 	        tophat_mapping_transcript_quantification
           fi
-          fi
-          fi
+
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
-              echo "###################################"
-              echo "Running STAR in paired end mode"
-              echo "###################################"
-              echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fastq ${filename3}_2P.fastq"
-              STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fastq ${filename3}_2P.fastq
+          echo "###################################"
+          echo "Running STAR in paired end mode"
+          echo "###################################"
+              if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                    echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fastq ${filename3}_2P.fastq"
+                    STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fastq ${filename3}_2P.fastq
+              elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                      echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_trimmed_R1.fastq ${filename3}_trimmed_R2.fastq"
+                      STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_trimmed_R1.fastq ${filename3}_trimmed_R2.fastq
+              fi
               star_mapping_lincRNA_annotation
-	            star_mapping_transcript_quantification
+              star_mapping_transcript_quantification
           fi
           house_keeping
 }
@@ -849,20 +934,24 @@ single_end()
     extension=$(echo "$f" | sed -r 's/.*(fq|fq.gz|fastq|fastq.gz)$/\1/')
     filename=$(basename "$f" ".$extension")
 
-          echo "######################"
-          echo "Trimming input read(s)"
-          echo "######################"
-          echo "trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-          trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
-          
+          echo "##############################"
+          echo "Trimming single-end input read"
+          echo "##############################"
+          if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                echo "trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+          elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                  echo "fastp -w $num_threads -i ${filename}.${extension} -o ${filename}_trimmed.${extension} -j ${filename}_fastp.json -h ${filename}_fastp.html"
+                  fastp -w $num_threads -i ${filename}.${extension} -o ${filename}_trimmed.${extension} -j ${filename}_fastp.json -h ${filename}_fastp.html
+          fi
+
           if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
               echo "###################################"
               echo "Running tophat2 in single end mode"
               echo "###################################"
-              
               echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation $fbname ${filename}_trimmed.${extension}"
               singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation $fbname ${filename}_trimmed.${extension}
-            
+
               echo "########################"
               echo "Converting .bam to .sam"
               echo "########################"
@@ -908,6 +997,7 @@ single_end()
               fi
               tophat_mapping_lincRNA_annotation
               tophat_mapping_transcript_quantification
+
           elif [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
                     if [[ "$extension" =~ "fq.gz" ]]; then
                     echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename}_ --readFilesIn ${filename}_trimmed.${extension}"
@@ -1013,19 +1103,34 @@ elif [ ! -z "$sra_id" ]; then
               echo "singularity run --cleanenv sra-tools_3.0.0.sif fasterq-dump -e $num_threads $sra_id"
               singularity run --cleanenv sra-tools_3.0.0.sif fasterq-dump -e $num_threads $sra_id
               
-              echo "trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-              trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
-            
+              echo "###############################"
+              echo "Trimming paired-end input reads"
+              echo "###############################"
+              if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                    echo "trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                    trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+              elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                      echo "fastp -w $num_threads -i ${sra_id}_1.fastq -I ${sra_id}_2.fastq -o ${sra_id}_trimmed_R1.fastq.gz -O ${sra_id}_trimmed_R2.fastq.gz -j ${sra_id}_fastp.json -h ${sra_id}_fastp.html"
+                      fastp -w $num_threads -i ${sra_id}_1.fastq -I ${sra_id}_2.fastq -o ${sra_id}_trimmed_R1.fastq.gz -O ${sra_id}_trimmed_R2.fastq.gz -j ${sra_id}_fastp.json -h ${sra_id}_fastp.html
+              fi
+
               if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
               echo "###################################"
               echo "Running tophat2 in paired end mode"
               echo "###################################"
-              
-              echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz"
-              singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz
-              echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_2P.fastq.gz,${sra_id}_2U.fastq.gz"
-              singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_2P.fastq.gz,${sra_id}_2U.fastq.gz
-                      
+                    if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz"
+                          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz
+                          echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_2P.fastq.gz"
+                          singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_2P.fastq.gz
+                          
+                    elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                            echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_trimmed_R1.fastq.gz"
+                            singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_trimmed_R1.fastq.gz
+                            echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_trimmed_R2.fastq.gz"
+                            singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_rev_tophat -G $referenceannotation $fbname ${sra_id}_trimmed_R2.fastq.gz
+                    fi
+
               echo "########################"
               echo "Converting .bam to .sam"
               echo "########################"
@@ -1082,11 +1187,27 @@ elif [ ! -z "$sra_id" ]; then
               echo "######################################################"
               echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${sra_id}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05"
               singularity run --cleanenv hamr_xi_1.4.sif -fe ${sra_id}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05
+              fi
               sra_id_lincRNA_annotation
               sra_id_transcript_quantification
+              fi
+              
+              if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
+                  echo "###################################"
+                  echo "Running STAR in paired end mode"
+                  echo "###################################"
+                    if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                          echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${sra_id}_ --readFilesIn ${sra_id}_1P.fastq.gz ${sra_id}_2P.fastq.gz"
+                          STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${sra_id}_ --readFilesIn ${sra_id}_1P.fastq.gz ${sra_id}_2P.fastq.gz
+                    elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                            echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${sra_id}_ --readFilesIn ${sra_id}_trimmed_R1.fastq.gz ${sra_id}_trimmed_R2.fastq.gz"
+                            STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${sra_id}_ --readFilesIn ${sra_id}_trimmed_R1.fastq.gz ${sra_id}_trimmed_R2.fastq.gz
+                    fi
+              star_mapping_lincRNA_annotation
+              star_mapping_transcript_quantification
+              fi
               house_keeping
-              fi
-              fi
+              
         elif [ "$seq_type" == "SE" ]; then
                 echo "######################"
                 echo "Downloading SRA data"
@@ -1096,17 +1217,24 @@ elif [ ! -z "$sra_id" ]; then
                 singularity run --cleanenv sra-tools_3.0.0.sif prefetch $sra_id
                 echo "singularity run --cleanenv sra-tools_3.0.0.sif fasterq-dump -e $num_threads $sra_id"
                 singularity run --cleanenv sra-tools_3.0.0.sif fasterq-dump -e $num_threads $sra_id
-
-                echo "trimmomatic SE -threads $num_threads ${sra_id}.fastq ${sra_id}_trimmed.fastq ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-                trimmomatic SE -threads $num_threads ${sra_id}.fastq ${sra_id}_trimmed.fastq ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
                 
+                echo "##############################"
+                echo "Trimming single-end input read"
+                echo "##############################"
+                if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
+                      echo "trimmomatic SE -threads $num_threads ${sra_id}.fastq ${sra_id}_trimmed.fastq.gz ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                      trimmomatic SE -threads $num_threads ${sra_id}.fastq ${sra_id}_trimmed.fastq.gz ILLUMINACLIP:TruSeq3-SE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+                elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
+                        echo "fastp -w $num_threads -i ${sra_id}.fastq -o ${sra_id}_trimmed.fastq.gz -j ${sra_id}_fastp.json -h ${sra_id}_fastp.html"
+                        fastp -w $num_threads -i ${sra_id}.fastq -o ${sra_id}_trimmed.fastq.gz -j ${sra_id}_fastp.json -h ${sra_id}_fastp.html
+                fi
+
                 if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
                 echo "###################################"
                 echo "Running tophat2 in single end mode"
                 echo "###################################"
-                  
-                echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_tophat -G $referenceannotation $fbname ${sra_id}_trimmed.fastq"
-                singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_tophat -G $referenceannotation $fbname ${sra_id}_trimmed.fastq
+                echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_tophat -G $referenceannotation $fbname ${sra_id}_trimmed.fastq.gz"
+                singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_tophat -G $referenceannotation $fbname ${sra_id}_trimmed.fastq.gz
                 
                 echo "########################"
                 echo "Converting .bam to .sam"
@@ -1130,7 +1258,8 @@ elif [ ! -z "$sra_id" ]; then
                 echo "Sorting unique reads"
                 echo a "samtools sort -@ $num_threads ${sra_id}_unique.bam > ${sra_id}_sorted.bam"
                 samtools sort -@ $num_threads ${sra_id}_unique.bam > ${sra_id}_sorted.bam
-                  
+                
+                if [ "$HAMR" != 0 ]; then
                 echo "######################################################"
                 echo "Resolving spliced alignments"
                 echo "######################################################"
@@ -1142,8 +1271,7 @@ elif [ ! -z "$sra_id" ]; then
                 samtools index ${sra_id}_RGO.bam ${sra_id}_RGO.bam.bai
                 echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${sra_id}_RGO.bam -o ${sra_id}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
                 singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${sra_id}_RGO.bam -o ${sra_id}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
-
-                if [ "$HAMR" != 0 ]; then  
+  
                 echo "######################################################"
                 echo "Running HAMR"
                 echo "######################################################"
@@ -1152,8 +1280,16 @@ elif [ ! -z "$sra_id" ]; then
                 fi
                 sra_id_lincRNA_annotation
                 sra_id_transcript_quantification
-                house_keeping
                 fi
+
+                if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
+                      echo "STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${sra_id}_ --readFilesIn ${sra_id}_trimmed.fastq.gz"
+                      STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${sra_id}_ --readFilesIn ${sra_id}_trimmed.fastq.gz
+                      sra_id_lincRNA_annotation
+                      sra_id_transcript_quantification
+                fi
+                house_keeping
+                
           fi
                 
 fi
