@@ -169,7 +169,7 @@ echo "########################################################"
 echo "Pulling required singularity images"
 echo "########################################################"
 singularity pull docker://reetututeja/hamr_xi:1.4
-singularity pull docker://evolinc/evolinc-i:1.7.5
+singularity pull docker://chosenobih/evolinc_i:latest
 singularity pull docker://broadinstitute/gatk3:3.5-0
 singularity pull docker://quay.io/biocontainers/tophat:2.1.1--py27_3
 singularity pull docker://ncbi/sra-tools:3.0.0
@@ -355,15 +355,15 @@ tophat_mapping_lincRNA_annotation()
                 stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr
                 echo "cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
                 cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
                 elif [ "$lib_type" == fr-firststrand ]; then
                 echo "stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf"
                 stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf
                 echo "cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
                 cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
                 fi   
             elif [ "$seq_type" == "SE" ]; then
                 if [ "$lib_type" == fr-secondstrand ]; then      
@@ -371,15 +371,15 @@ tophat_mapping_lincRNA_annotation()
                 stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr
                 echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
                 cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA
                 elif [ "$lib_type" == fr-firststrand ]; then
                 echo "stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf"
                 stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf
                 echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
                 cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA
                 fi
             fi
       fi
@@ -397,15 +397,15 @@ star_mapping_lincRNA_annotation()
                 stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --fr
                 echo "cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
                 cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
                 elif [ "$lib_type" == fr-firststrand ]; then
                 echo "stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --rf"
                 stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --rf
                 echo "cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
                 cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
                 fi   
             elif [ "$seq_type" == "SE" ]; then
                 if [ "$lib_type" == fr-secondstrand ]; then      
@@ -413,15 +413,15 @@ star_mapping_lincRNA_annotation()
                 stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr
                 echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
                 cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA
                 elif [ "$lib_type" == fr-firststrand ]; then
                 echo "stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf"
                 stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf
                 echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
                 cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA
                 fi
             fi
       fi
@@ -439,15 +439,15 @@ sra_id_lincRNA_annotation()
                 stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --fr
                 echo "cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
                 cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA
                 elif [ "$lib_type" == fr-firststrand ]; then
                 echo "stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --rf"
                 stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --rf
                 echo "cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
                 cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA
                 fi     
             elif [ "$seq_type" == "SE" ]; then
                 if [ "$lib_type" == fr-secondstrand ]; then      
@@ -455,15 +455,15 @@ sra_id_lincRNA_annotation()
                 stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --fr
                 echo "cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
                 cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA
                 elif [ "$lib_type" == fr-firststrand ]; then
                 echo "stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --rf"
                 stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --rf
                 echo "cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
                 cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc-i_1.7.5.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA
+                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA"
+                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA
                 fi
             fi
       fi
