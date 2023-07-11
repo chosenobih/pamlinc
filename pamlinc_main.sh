@@ -9,7 +9,7 @@ usage() {
 
 cat <<'EOF'
   
-  ###### Command line options ##########
+  ######################################### COMMAND LINE OPTIONS #############################
   -g <reference genome fasta file>
   -a <reference genome annotation>
   -i <index_folder>
@@ -36,9 +36,11 @@ cat <<'EOF'
   -k feature type #Feature type (Default is exon)
   -r gene attribute (Default is gene_id)
   -n strandedness (Default is 0 (unstranded), 1 (stranded), 2 (reversely stranded)
+################################################# END ########################################
 EOF
     exit 0
 }
+
 
 trimmomatic=0
 fastp=0
@@ -165,15 +167,15 @@ fi
 ###################################################################################################################
 # # Pull required images for HAMR, EVOLINC-I and GATK
 ###################################################################################################################
-echo "########################################################"
-echo "Pulling required singularity images"
-echo "########################################################"
-singularity pull docker://reetututeja/hamr_xi:1.4
-singularity pull docker://chosenobih/evolinc_i:latest
-singularity pull docker://broadinstitute/gatk3:3.5-0
-singularity pull docker://quay.io/biocontainers/tophat:2.1.1--py27_3
-singularity pull docker://ncbi/sra-tools:3.0.0
-singularity pull docker://biocontainers/bowtie2:v2.4.1_cv1
+#echo "########################################################"
+#echo "Pulling required singularity images"
+#echo "########################################################"
+#singularity pull docker://reetututeja/hamr_xi:1.4
+#singularity pull docker://chosenobih/evolinc_i:latest
+#singularity pull docker://broadinstitute/gatk3:3.5-0
+#singularity pull docker://quay.io/biocontainers/tophat:2.1.1--py27_3
+#singularity pull docker://ncbi/sra-tools:3.0.0
+#singularity pull docker://biocontainers/bowtie2:v2.4.1_cv1
 
 ###################################################################################################################
 # # pipeline house keeping - move output files into user input directory; delete some intermediate output files
@@ -249,7 +251,7 @@ house_keeping()
       fi
       mv *.bam intermediate_files
       mv intermediate_files "$pipeline_output"
-      rm *.sif
+      #rm *.sif
 
       echo "##############################"
       echo "pipeline executed successfully"
@@ -355,15 +357,15 @@ tophat_mapping_lincRNA_annotation()
                 stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr
                 echo "cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
                 cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
+                echo "evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
+                evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
                 elif [ "$lib_type" == fr-firststrand ]; then
                 echo "stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf"
                 stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf
                 echo "cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
                 cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
-                echo "singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
-                singularity run -B $(pwd):/mnt --pwd /mnt evolinc_i_latest.sif -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
+                echo "evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA"
+                evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA
                 fi   
             elif [ "$seq_type" == "SE" ]; then
                 if [ "$lib_type" == fr-secondstrand ]; then      
@@ -487,8 +489,8 @@ paired_fq_gz()
           echo "###############################"
           fi
           if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
-                echo "trimmomatic PE -threads $num_threads ${filename}.fq.gz ${filename2}.fq.gz ${filename3}_1P.fq.gz ${filename3}_1U.fq.gz ${filename3}_2P.fq.gz ${filename3}_2U.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-                trimmomatic PE -threads $num_threads ${filename}.fq.gz ${filename2}.fq.gz ${filename3}_1P.fq.gz ${filename3}_1U.fq.gz ${filename3}_2P.fq.gz ${filename3}_2U.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+                echo "trimmomatic PE -threads $num_threads ${filename}.fq.gz ${filename2}.fq.gz ${filename3}_1P.fq.gz ${filename3}_1U.fq.gz ${filename3}_2P.fq.gz ${filename3}_2U.fq.gz ILLUMINACLIP:$ADAPTERPATH/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                trimmomatic PE -threads $num_threads ${filename}.fq.gz ${filename2}.fq.gz ${filename3}_1P.fq.gz ${filename3}_1U.fq.gz ${filename3}_2P.fq.gz ${filename3}_2U.fq.gz ILLUMINACLIP:$ADAPTERPATH/TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
           elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
                   echo "fastp -w $num_threads -i ${filename}.fq.gz -I ${filename2}.fq.gz -o ${filename3}_trimmed_R1.fq.gz -O ${filename3}_trimmed_R2.fq.gz -j ${filename3}_fastp.json -h ${filename3}_fastp.html"
                   fastp -w $num_threads -i ${filename}.fq.gz -I ${filename2}.fq.gz -o ${filename3}_trimmed_R1.fq.gz -O ${filename3}_trimmed_R2.fq.gz -j ${filename3}_fastp.json -h ${filename3}_fastp.html
@@ -558,14 +560,14 @@ paired_fq_gz()
           picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome
           echo "samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai"
           samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai
-          echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-          singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
-	  
-	        echo "######################################################"
+          echo " gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -O ${filename3}_resolvedalig.bam -OBI false"
+          gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -O ${filename3}_resolvedalig.bam -OBI false
+          
+          echo "######################################################"
           echo "Running HAMR"
           echo "######################################################"
-	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
-	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+          echo "python hamr.py -fe ${filename3}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
+          python /HAMR/hamr.py -fe ${filename3}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
           fi
           tophat_mapping_lincRNA_annotation
 	        tophat_mapping_transcript_quantification
@@ -600,11 +602,11 @@ paired_fastq_gz()
           echo "###############################"
           fi
           if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
-                echo "trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-                trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+                echo "trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:$ADAPTERPATH/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                #trimmomatic PE -threads $num_threads ${filename}.fastq.gz ${filename2}.fastq.gz ${filename3}_1P.fastq.gz ${filename3}_1U.fastq.gz ${filename3}_2P.fastq.gz ${filename3}_2U.fastq.gz ILLUMINACLIP:$ADAPTERPATH/TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
           elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
                   echo "fastp -w $num_threads -i ${filename}.fastq.gz -I ${filename2}.fastq.gz -o ${filename3}_trimmed_R1.fastq.gz -O ${filename3}_trimmed_R2.fastq.gz -j ${filename3}_fastp.json -h ${filename3}_fastp.html"
-                  fastp -w $num_threads -i ${filename}.fastq.gz -I ${filename2}.fastq.gz -o ${filename3}_trimmed_R1.fastq.gz -O ${filename3}_trimmed_R2.fastq.gz -j ${filename3}_fastp.json -h ${filename3}_fastp.html
+                  #fastp -w $num_threads -i ${filename}.fastq.gz -I ${filename2}.fastq.gz -o ${filename3}_trimmed_R1.fastq.gz -O ${filename3}_trimmed_R2.fastq.gz -j ${filename3}_fastp.json -h ${filename3}_fastp.html
           fi
 
           if [ "$tophat" != 0 ] && [ "$star" == 0 ]; then
@@ -612,77 +614,78 @@ paired_fastq_gz()
           echo "Running tophat2 in paired end mode"
           echo "###################################"
                 if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
-                      echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
-                      singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
-                      echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz"
-                      singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz
+                      echo "tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz"
+                      #tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
+                      echo "tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz"
+                      #tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_2P.fastq.gz
                       
                 elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
-                        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fastq.gz"
-                        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fastq.gz
-                        echo "tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fastq.gz"
-                        singularity run --cleanenv tophat_2.1.1--py27_3.sif tophat2 -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fastq.gz
+                        echo "tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fastq.gz"
+                        #tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R1.fastq.gz
+                        echo "tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fastq.gz"
+                        #tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_rev_tophat -G $referenceannotation $fbname ${filename3}_trimmed_R2.fastq.gz
                 fi
 
           echo "########################"
           echo "Converting .bam to .sam"
           echo "########################"
           echo "samtools view -h -@ $num_threads -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted_hits.bam"
-          samtools view -h -@ $num_threads -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted_hits.bam
+          #samtools view -h -@ $num_threads -o ${filename3}_fwd.sam ${filename3}_fwd_tophat/accepted_hits.bam
           echo "samtools view -h -o ${filename3}_rev.sam ${filename3}_rev_tophat/accepted_hits.bam"
-          samtools view -h -o ${filename3}_rev.sam ${filename3}_rev_tophat/accepted_hits.bam
+          #samtools view -h -o ${filename3}_rev.sam ${filename3}_rev_tophat/accepted_hits.bam
          
           echo "#######################"
           echo "Grepping unique reads"
           echo "#######################"
           echo "grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam"
-          grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam
+          #grep -P '^\@|NH:i:1$' ${filename3}_fwd.sam > ${filename3}_fwd_unique.sam
           echo "grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam"
-          grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam
+          #grep -P '^\@|NH:i:1$' ${filename3}_rev.sam > ${filename3}_rev_unique.sam
          
           echo "######################################################"
           echo "Converting .sam to .bam before running samtools sort"
           echo "######################################################"
           echo "samtools view -bSh -@ $num_threads ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam"
-          samtools view -bSh -@ $num_threads ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam
+          #samtools view -bSh -@ $num_threads ${filename3}_fwd_unique.sam > ${filename3}_fwd_unique.bam
           echo "samtools view -bSh -@ $num_threads ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam"
-          samtools view -bSh -@ $num_threads ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam
+          #samtools view -bSh -@ $num_threads ${filename3}_rev_unique.sam > ${filename3}_rev_unique.bam
          
           echo "#######################"
           echo "Sorting unique reads"
           echo "#######################"
           echo "samtools sort -@ $num_threads ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam"
-          samtools sort -@ $num_threads ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam
+          #samtools sort -@ $num_threads ${filename3}_fwd_unique.bam > ${filename3}_fwd_sorted.bam
           echo "samtools sort -@ $num_threads ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam"
-          samtools sort -@ $num_threads ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam
+          #samtools sort -@ $num_threads ${filename3}_rev_unique.bam > ${filename3}_rev_sorted.bam
          
           echo "########################"
           echo "Merging fwd and rev reads"
           echo "########################"
           echo "samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam"
-          samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
+          #samtools merge -@ $num_threads -f ${filename3}_merged.bam ${filename3}_fwd_sorted.bam ${filename3}_rev_sorted.bam
           
           if [ "$HAMR" != 0 ]; then
-	        echo "######################################################"
+          echo "######################################################"
           echo "Resolving spliced alignments"
           echo "######################################################"
           echo "picard AddOrReplaceReadGroups I=${filename3}_merged.bam O=${filename3}_RG.bam ID=${filename3} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename3}"
-          picard AddOrReplaceReadGroups I=${filename3}_merged.bam O=${filename3}_RG.bam ID=${filename3} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename3}
+          #picard AddOrReplaceReadGroups I=${filename3}_merged.bam O=${filename3}_RG.bam ID=${filename3} LB=D4 PL=illumina PU=HWUSI-EAS1814:28:2 SM=${filename3}
           echo "picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome"
-          picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome
+          #picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome
           echo "samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai"
-          samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai
-          echo "singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-          singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
-	  
-	        echo "######################################################"
+          #samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai
+          echo "java -Xmx8g -jar gatk SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -O ${filename3}_resolvedalig.bam -OBI false"
+          gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -O ${filename3}_resolvedalig.bam -OBI false
+          
+          echo "######################################################"
           echo "Running HAMR"
           echo "######################################################"
-	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
-	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+          
+          echo "python hamr.py -fe ${filename3}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
+          python /HAMR/hamr.py -fe ${filename3}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
           fi
           tophat_mapping_lincRNA_annotation
-	        tophat_mapping_transcript_quantification
+          tophat_mapping_transcript_quantification
           fi
 
           if [ "$tophat" == 0 ] && [ "$star" != 0 ]; then
@@ -713,8 +716,8 @@ paired_fq()
           echo "###############################"
           fi
           if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
-                echo "trimmomatic PE -threads $num_threads ${filename}.fq ${filename2}.fq ${filename3}_1P.fq ${filename3}_1U.fq ${filename3}_2P.fq ${filename3}_2U.fq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-                trimmomatic PE -threads $num_threads ${filename}.fq ${filename2}.fq ${filename3}_1P.fq ${filename3}_1U.fq ${filename3}_2P.fq ${filename3}_2U.fq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+                echo "trimmomatic PE -threads $num_threads ${filename}.fq ${filename2}.fq ${filename3}_1P.fq ${filename3}_1U.fq ${filename3}_2P.fq ${filename3}_2U.fq ILLUMINACLIP:$ADAPTERPATH/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                trimmomatic PE -threads $num_threads ${filename}.fq ${filename2}.fq ${filename3}_1P.fq ${filename3}_1U.fq ${filename3}_2P.fq ${filename3}_2U.fq ILLUMINACLIP:$ADAPTERPATH/TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
           elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
                   echo "fastp -w $num_threads -i ${filename}.fq -I ${filename2}.fq -o ${filename3}_trimmed_R1.fq -O ${filename3}_trimmed_R2.fq -j ${filename3}_fastp.json -h ${filename3}_fastp.html"
                   fastp -w $num_threads -i ${filename}.fq -I ${filename2}.fq -o ${filename3}_trimmed_R1.fq -O ${filename3}_trimmed_R2.fq -j ${filename3}_fastp.json -h ${filename3}_fastp.html
@@ -785,14 +788,14 @@ paired_fq()
           picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome
           echo "samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai"
           samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai
-          echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-          singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
-	  
-	        echo "######################################################"
+          echo " gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -O ${filename3}_resolvedalig.bam -OBI false"
+          gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -O ${filename3}_resolvedalig.bam -OBI false
+          
+          echo "######################################################"
           echo "Running HAMR"
           echo "######################################################"
-	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
-	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+          echo "python hamr.py -fe ${filename3}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
+          python /HAMR/hamr.py -fe ${filename3}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
           fi
           tophat_mapping_lincRNA_annotation
 	        tophat_mapping_transcript_quantification
@@ -827,8 +830,8 @@ paired_fastq()
           echo "###############################"
           fi
           if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
-                echo "trimmomatic PE -threads $num_threads ${filename}.fastq ${filename2}.fastq ${filename3}_1P.fastq ${filename3}_1U.fastq ${filename3}_2P.fastq ${filename3}_2U.fastq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-                trimmomatic PE -threads $num_threads ${filename}.fastq ${filename2}.fastq ${filename3}_1P.fastq ${filename3}_1U.fastq ${filename3}_2P.fastq ${filename3}_2U.fastq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+                echo "trimmomatic PE -threads $num_threads ${filename}.fastq ${filename2}.fastq ${filename3}_1P.fastq ${filename3}_1U.fastq ${filename3}_2P.fastq ${filename3}_2U.fastq ILLUMINACLIP:$ADAPTERPATH/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                trimmomatic PE -threads $num_threads ${filename}.fastq ${filename2}.fastq ${filename3}_1P.fastq ${filename3}_1U.fastq ${filename3}_2P.fastq ${filename3}_2U.fastq ILLUMINACLIP:$ADAPTERPATH/TruSeq3-PE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
           elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
                   echo "fastp -w $num_threads -i ${filename}.fastq -I ${filename2}.fastq -o ${filename3}_trimmed_R1.fastq -O ${filename3}_trimmed_R2.fastq -j ${filename3}_fastp.json -h ${filename3}_fastp.html"
                   fastp -w $num_threads -i ${filename}.fastq -I ${filename2}.fastq -o ${filename3}_trimmed_R1.fastq -O ${filename3}_trimmed_R2.fastq -j ${filename3}_fastp.json -h ${filename3}_fastp.html
@@ -899,14 +902,14 @@ paired_fastq()
           picard ReorderSam I=${filename3}_RG.bam O=${filename3}_RGO.bam R=$referencegenome
           echo "samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai"
           samtools index ${filename3}_RGO.bam ${filename3}_RGO.bam.bai
-          echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-          singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -o ${filename3}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
-	  
-	        echo "######################################################"
+          echo "gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -O ${filename3}_resolvedalig.bam -OBI false"
+          gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${filename3}_RGO.bam -O ${filename3}_resolvedalig.bam -OBI false
+          
+          echo "######################################################"
           echo "Running HAMR"
           echo "######################################################"
-	        echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
-	        singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename3}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
+          echo "python hamr.py -fe ${filename3}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05"
+          python /HAMR/hamr.py -fe ${filename3}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${filename3}_HAMR ${filename3} 30 10 0.01 H4 1 .05 .05
           fi
           tophat_mapping_lincRNA_annotation
 	        tophat_mapping_transcript_quantification
@@ -938,8 +941,8 @@ single_end()
           echo "Trimming single-end input read"
           echo "##############################"
           if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
-                echo "trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-                trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+                echo "trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:$ADAPTERPATH/TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                trimmomatic SE -threads $num_threads ${filename}.${extension} ${filename}_trimmed.${extension} ILLUMINACLIP:$ADAPTERPATH/TruSeq3-SE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
           elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
                   echo "fastp -w $num_threads -i ${filename}.${extension} -o ${filename}_trimmed.${extension} -j ${filename}_fastp.json -h ${filename}_fastp.html"
                   fastp -w $num_threads -i ${filename}.${extension} -o ${filename}_trimmed.${extension} -j ${filename}_fastp.json -h ${filename}_fastp.html
@@ -986,14 +989,14 @@ single_end()
               picard ReorderSam I=${filename}_RG.bam O=${filename}_RGO.bam R=$referencegenome
               echo "samtools index ${filename}_RGO.bam ${sra_id}_RGO.bam.bai"
               samtools index ${filename}_RGO.bam ${filename}_RGO.bam.bai
-              echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename}_RGO.bam -o ${filename}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-              singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${filename}_RGO.bam -o ${filename}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
+              echo "gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${filename}_RGO.bam -O ${filename}_resolvedalig.bam -OBI false"
+              gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${filename}_RGO.bam -O ${filename}_resolvedalig.bam -OBI false
         
               echo "######################################################"
               echo "Running HAMR"
               echo "######################################################"
-              echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05"
-              singularity run --cleanenv hamr_xi_1.4.sif -fe ${filename}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05
+              echo "python hamr.py -fe ${filename}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05"
+              python /HAMR/hamr.py -fe ${filename}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${filename}_HAMR ${filename} 30 10 0.01 H4 1 .05 .05
               fi
               tophat_mapping_lincRNA_annotation
               tophat_mapping_transcript_quantification
@@ -1107,8 +1110,8 @@ elif [ ! -z "$sra_id" ]; then
               echo "Trimming paired-end input reads"
               echo "###############################"
               if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
-                    echo "trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-                    trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+                    echo "trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:$ADAPTERPATH/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                    trimmomatic PE -threads $num_threads ${sra_id}_1.fastq ${sra_id}_2.fastq ${sra_id}_1P.fastq.gz ${sra_id}_1U.fastq.gz ${sra_id}_2P.fastq.gz ${sra_id}_2U.fastq.gz ILLUMINACLIP:$ADAPTERPATH/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
               elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
                       echo "fastp -w $num_threads -i ${sra_id}_1.fastq -I ${sra_id}_2.fastq -o ${sra_id}_trimmed_R1.fastq.gz -O ${sra_id}_trimmed_R2.fastq.gz -j ${sra_id}_fastp.json -h ${sra_id}_fastp.html"
                       fastp -w $num_threads -i ${sra_id}_1.fastq -I ${sra_id}_2.fastq -o ${sra_id}_trimmed_R1.fastq.gz -O ${sra_id}_trimmed_R2.fastq.gz -j ${sra_id}_fastp.json -h ${sra_id}_fastp.html
@@ -1179,14 +1182,14 @@ elif [ ! -z "$sra_id" ]; then
               picard ReorderSam I=${sra_id}_RG.bam O=${sra_id}_RGO.bam R=$referencegenome
               echo "samtools index ${sra_id}_RGO.bam ${sra_id}_RGO.bam.bai"
               samtools index ${sra_id}_RGO.bam ${sra_id}_RGO.bam.bai
-              echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${sra_id}_RGO.bam -o ${sra_id}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-              singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${sra_id}_RGO.bam -o ${sra_id}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
+              echo "gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${sra_id}_RGO.bam -O ${sra_id}_resolvedalig.bam -OBI false"
+              gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${sra_id}_RGO.bam -O ${sra_id}_resolvedalig.bam -OBI false
           
               echo "######################################################"
               echo "Running HAMR"
               echo "######################################################"
-              echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${sra_id}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05"
-              singularity run --cleanenv hamr_xi_1.4.sif -fe ${sra_id}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05
+              echo "python hamr.py -fe ${sra_id}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05"
+              python /HAMR/hamr.py -fe ${sra_id}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05
               fi
               sra_id_lincRNA_annotation
               sra_id_transcript_quantification
@@ -1222,8 +1225,8 @@ elif [ ! -z "$sra_id" ]; then
                 echo "Trimming single-end input read"
                 echo "##############################"
                 if [ "$trimmomatic" != 0 ] && [ "$fastp" == 0 ]; then
-                      echo "trimmomatic SE -threads $num_threads ${sra_id}.fastq ${sra_id}_trimmed.fastq.gz ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
-                      trimmomatic SE -threads $num_threads ${sra_id}.fastq ${sra_id}_trimmed.fastq.gz ILLUMINACLIP:TruSeq3-SE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
+                      echo "trimmomatic SE -threads $num_threads ${sra_id}.fastq ${sra_id}_trimmed.fastq.gz ILLUMINACLIP:$ADAPTERPATH/TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+                      trimmomatic SE -threads $num_threads ${sra_id}.fastq ${sra_id}_trimmed.fastq.gz ILLUMINACLIP:$ADAPTERPATH/TruSeq3-SE.fa:2:30:10:2 LEADING:3 TRAILING:3 MINLEN:36
                 elif [ "$trimmomatic" == 0 ] && [ "$fastp" != 0 ]; then
                         echo "fastp -w $num_threads -i ${sra_id}.fastq -o ${sra_id}_trimmed.fastq.gz -j ${sra_id}_fastp.json -h ${sra_id}_fastp.html"
                         fastp -w $num_threads -i ${sra_id}.fastq -o ${sra_id}_trimmed.fastq.gz -j ${sra_id}_fastp.json -h ${sra_id}_fastp.html
@@ -1269,14 +1272,14 @@ elif [ ! -z "$sra_id" ]; then
                 picard ReorderSam I=${sra_id}_RG.bam O=${sra_id}_RGO.bam R=$referencegenome
                 echo "samtools index ${sra_id}_RGO.bam ${sra_id}_RGO.bam.bai"
                 samtools index ${sra_id}_RGO.bam ${sra_id}_RGO.bam.bai
-                echo "java -jar GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${sra_id}_RGO.bam -o ${sra_id}_resolvedalig.bam -U ALLOW_N_CIGAR_READS"
-                singularity run --cleanenv gatk3_3.5-0.sif java -Xmx8g -jar ./GenomeAnalysisTK.jar -T SplitNCigarReads -R $referencegenome -I ${sra_id}_RGO.bam -o ${sra_id}_resolvedalig.bam -U ALLOW_N_CIGAR_READS
+                echo "gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${sra_id}_RGO.bam -O ${sra_id}_resolvedalig.bam -OBI false"
+                gatk --java-options "-Xmx8g" SplitNCigarReads -R $referencegenome -I ${sra_id}_RGO.bam -O ${sra_id}_resolvedalig.bam -OBI false
   
                 echo "######################################################"
                 echo "Running HAMR"
                 echo "######################################################"
-                echo "singularity run --cleanenv hamr_xi_1.4.sif -fe ${sra_id}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05"
-                singularity run --cleanenv hamr_xi_1.4.sif -fe ${sra_id}_resolvedalig.bam $referencegenome hamr_model/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05
+                echo "python hamr.py -fe ${sra_id}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05"
+                python /HAMR/hamr.py -fe ${sra_id}_resolvedalig.bam $referencegenome $HAMR_MODELS_PATH/euk_trna_mods.Rdata ${sra_id}_HAMR ${sra_id} 30 10 0.01 H4 1 .05 .05
                 fi
                 sra_id_lincRNA_annotation
                 sra_id_transcript_quantification
