@@ -8,6 +8,7 @@ USER root
 RUN apt-get update && apt-get install -y g++ \
 	    make \
 		git \
+		libssl-dev \
 		zlib1g-dev \
 		libcurl4-openssl-dev \ 
 		openssl \
@@ -62,8 +63,8 @@ RUN conda install fastp==0.23.4 -c bioconda -y && \
 WORKDIR /
 
 RUN wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip && \
-	unzip Trimmomatic-0.38.zip && rm Trimmomatic-0.38.zip
-ADD /Trimmomatic-0.38/adapters /usr/bin/adapters
+	unzip Trimmomatic-0.38.zip && rm Trimmomatic-0.38.zip && \
+	cp -R /Trimmomatic-0.38/adapters /usr/bin/adapters
 ENV ADAPTERPATH=/usr/bin/adapters
 
 ## evolinc-part-I
@@ -95,6 +96,7 @@ RUN apt-get -y install ca-certificates software-properties-common gnupg2 gnupg1 
 	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
 	add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" && \
 	apt-get install -y r-base && \
+	Rscript -e 'install.packages("openssl", dependencies = TRUE,  repos="http://cran.rstudio.com/")' && \
 	Rscript -e 'install.packages("splitstackshape", dependencies = TRUE, repos="http://cran.rstudio.com/");' && \
 	Rscript -e 'install.packages("dplyr", dependencies = TRUE, repos="http://cran.rstudio.com/");' && \
 	Rscript -e 'if (!requireNamespace("BiocManager", quietly = TRUE)){install.packages("BiocManager")};' && \
@@ -131,8 +133,8 @@ RUN chmod +x /evolinc_docker/evolinc-part-I.sh && cp /evolinc_docker/evolinc-par
 
 ## HAMR
 RUN git clone https://github.com/chosenobih/HAMR.git && \
-	chmod +x /HAMR/hamr.py && cp /HAMR/hamr.py $BINPATH
-ADD /HAMR/models /usr/bin/hamr_models
+	chmod +x /HAMR/hamr.py && cp /HAMR/hamr.py $BINPATH && \
+	cp -R /HAMR/models /usr/bin/hamr_models
 ENV HAMR_MODELS_PATH=/usr/bin/hamr_models
 
 # samtools & 
@@ -174,7 +176,7 @@ ENV PATH /HAMR/:$PATH
 RUN vdb-config --root -s /repository/user/cache-disabled="true"
 
 # pamlinc wrapper script
-ADD pamlinc_main.sh $BINPATH
-RUN chmod +x $BINPATH/pamlinc_main.sh
+ADD pamlinc.sh $BINPATH
+RUN chmod +x $BINPATH/pamlinc.sh
 
-ENTRYPOINT ["pamlinc_main.sh"]
+ENTRYPOINT ["pamlinc.sh"]
