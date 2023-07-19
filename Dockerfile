@@ -6,8 +6,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 USER root
 
 RUN apt-get update && apt-get install -y g++ \
-	    make \
+		build-essential \
+	   	make \
 		git \
+		libcurl4 \
+		libcurl4-openssl-dev \
+		libssl-dev \
+		libncurses5-dev \
+		libsodium-dev \
+		libmariadb-client-lgpl-dev \
 		libssl-dev \
 		zlib1g-dev \
 		libcurl4-openssl-dev \ 
@@ -20,7 +27,7 @@ RUN apt-get update && apt-get install -y g++ \
 		python2.7-dev \
 		python-matplotlib \
 		python-numpy \
-        python-pandas \
+       	python-pandas \
 		tzdata \ 
 		perl \
 		wget \
@@ -57,6 +64,7 @@ RUN conda install fastp==0.23.4 -c bioconda -y && \
 	conda install numpy -y && \
 	conda install pandas -y && \
 	conda install last -c bioconda -y && \
+	conda install -c bioconda diamond && \
 	conda install matplotlib-base -c conda-forge -y
 
 # Required files
@@ -78,8 +86,8 @@ RUN wget -O- http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/cuffl
 # Transdecoder
 RUN wget -O- https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz | tar xzvf -
 # Diamond Blast
-RUN wget http://github.com/bbuchfink/diamond/releases/download/v0.9.10/diamond-linux64.tar.gz && \
-	tar xzf diamond-linux64.tar.gz
+#RUN wget http://github.com/bbuchfink/diamond/releases/download/v0.9.10/diamond-linux64.tar.gz && \
+#	tar xzf diamond-linux64.tar.gz
 # Bedtools
 RUN wget https://github.com/arq5x/bedtools2/archive/v2.25.0.tar.gz && \
 	tar xvf v2.25.0.tar.gz && \
@@ -146,19 +154,17 @@ RUN ./configure --prefix=/usr/bin && \
 	make install
 WORKDIR /
 
+#HTSLIB
 RUN wget https://github.com/samtools/htslib/releases/download/1.17/htslib-1.17.tar.bz2 && \
 	tar -xvjf htslib-1.17.tar.bz2 && \
 	cd htslib-1.17 && \
-	./configure && \
 	make && \
-	make install && \
 	cd ..
 
 #GATK
 RUN wget https://github.com/broadinstitute/gatk/releases/download/4.2.2.0/gatk-4.2.2.0.zip && \
 	unzip gatk-4.2.2.0.zip && rm gatk-4.2.2.0.zip
 ENV PATH="/gatk-4.2.2.0:${PATH}"
-
 
 # Setting paths to all the softwares
 ENV PATH /evolinc_docker/cufflinks-2.2.1.Linux_x86_64/:$PATH

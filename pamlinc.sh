@@ -33,7 +33,8 @@ cat <<'EOF'
   -d reads_mismatches (% reads mismatches to allow. Needed for tophat2)
   -m HAMR
   -e evolinc_i
-  -E </path/to/transposable Elements file>
+  -E run evolinc_i with mandatory files or both mandatory and optional files. Denoted as "M" or "MO", include double quotation on the command line
+  -T </path/to/transposable Elements file>
   -C </path/to/CAGE RNA file>
   -D </path/to/known lincRNA file>
   -k feature type #Feature type (Default is exon)
@@ -100,13 +101,16 @@ while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:c:f:r:n:htswxqeECDmy:" opt; do
     evolinc_i=$OPTARG # evolinc_i
      ;;
     E)
-    blast_file=$OPTARG # evolinc_i
+    evolinc_option=$OPTARG # run evolinc_i with mandatory files or both mandatory and optional files. Denoted as "M" or "MO", include double quotation on the command line
+     ;;
+    T)
+    blast_file=$OPTARG # optional file for evolinc_i
      ;;
     C)
-    cage_file=$OPTARG # evolinc_i
+    cage_file=$OPTARG # optional file for evolinc_i
      ;;
     D)
-    known_linc=$OPTARG # evolinc_i
+    known_linc=$OPTARG # optional file evolinc_i
      ;;
     s)
     star=$OPTARG # star
@@ -292,7 +296,7 @@ star_mapping_transcript_quantification()
       if [ "$transcript_abun_quant" != 0 ]; then
       echo "###########################################################################"
       echo "Running featureCounts to quantify transcript"
-      echo "###########################################################################"    6
+      echo "###########################################################################"
             if [ "$evolinc_i" != 0 ]; then
                 if [ "$seq_type" == "PE" ]; then
                 echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam"
@@ -351,35 +355,55 @@ tophat_mapping_lincRNA_annotation()
       echo "###########################################################################"
             if [ "$seq_type" == "PE" ]; then
                 if [ "$lib_type" == fr-secondstrand ]; then      
-                echo "stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr"
-                stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr
-                echo "cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
-                cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
-                echo "evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc
-                elif [ "$lib_type" == fr-firststrand ]; then
-                echo "stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf"
-                stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf
-                echo "cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
-                cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
-                echo "evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr"
+                  stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --fr
+                  echo "cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
+                  cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA"
+                  evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
+               elif [ "$lib_type" == fr-firststrand ]; then
+                  echo "stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf"
+                  stringtie ${filename3}_merged.bam -o ${filename3}_merged.gtf -G $referenceannotation -p $num_threads --rf
+                  echo "cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
+                  cuffcompare ${filename3}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA"
+                  evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
                 fi   
             elif [ "$seq_type" == "SE" ]; then
                 if [ "$lib_type" == fr-secondstrand ]; then      
-                echo "stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr"
-                stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr
-                echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
-                cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
-                echo "evolinc-part-I.sh -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr"
+                  stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr
+                  echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
+                  cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA"
+                  evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
                 elif [ "$lib_type" == fr-firststrand ]; then
-                echo "stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf"
-                stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf
-                echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
-                cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
-                echo "evolinc-part-I.sh -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf"
+                  stringtie ${filename}_sorted.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf
+                  echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
+                  cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA"
+                  evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
                 fi
             fi
       fi
@@ -393,35 +417,55 @@ star_mapping_lincRNA_annotation()
       echo "###########################################################################"
             if [ "$seq_type" == "PE" ]; then
                 if [ "$lib_type" == fr-secondstrand ]; then      
-                echo "stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --fr"
-                stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --fr
-                echo "cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
-                cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
-                echo "evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --fr"
+                  stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --fr
+                  echo "cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
+                  cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA"
+                  evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
                 elif [ "$lib_type" == fr-firststrand ]; then
-                echo "stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --rf"
-                stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --rf
-                echo "cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
-                cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
-                echo "evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${filename3}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --rf"
+                  stringtie ${filename3}_Aligned.sortedByCoord.out.bam -o ${filename3}.gtf -G $referenceannotation -p $num_threads --rf
+                  echo "cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}"
+                  cuffcompare ${filename3}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename3}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA"
+                  evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${filename3}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename3}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
                 fi   
             elif [ "$seq_type" == "SE" ]; then
                 if [ "$lib_type" == fr-secondstrand ]; then      
-                echo "stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr"
-                stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr
-                echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
-                cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
-                echo "evolinc-part-I.sh -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr"
+                  stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --fr
+                  echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
+                  cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA"
+                  evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
                 elif [ "$lib_type" == fr-firststrand ]; then
-                echo "stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf"
-                stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf
-                echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
-                cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
-                echo "evolinc-part-I.sh -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${filename}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf"
+                  stringtie ${filename}_Aligned.sortedByCoord.out.bam -o ${filename}.gtf -G $referenceannotation -p $num_threads --rf
+                  echo "cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}"
+                  cuffcompare ${filename}.gtf -r $referenceannotation -s $referencegenome -T -o ${filename}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA"
+                  evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${filename}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${filename}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
                 fi
             fi
       fi
@@ -435,35 +479,55 @@ sra_id_lincRNA_annotation()
       echo "###########################################################################"
             if [ "$seq_type" == "PE" ]; then
                 if [ "$lib_type" == fr-secondstrand ]; then      
-                echo "stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --fr"
-                stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --fr
-                echo "cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
-                cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
-                echo "evolinc-part-I.sh -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --fr"
+                  stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --fr
+                  echo "cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
+                  cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA"
+                  evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi                
                 elif [ "$lib_type" == fr-firststrand ]; then
-                echo "stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --rf"
-                stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --rf
-                echo "cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
-                cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
-                echo "evolinc-part-I.sh -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --rf"
+                  stringtie ${sra_id}_merged.bam -o ${sra_id}_merged.gtf -G $referenceannotation -p $num_threads --rf
+                  echo "cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
+                  cuffcompare ${sra_id}_merged.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA"
+                  evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
                 fi     
             elif [ "$seq_type" == "SE" ]; then
                 if [ "$lib_type" == fr-secondstrand ]; then      
-                echo "stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --fr"
-                stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --fr
-                echo "cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
-                cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
-                echo "evolinc-part-I.sh -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --fr"
+                  stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --fr
+                  echo "cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
+                  cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA"
+                  evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
                 elif [ "$lib_type" == fr-firststrand ]; then
-                echo "stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --rf"
-                stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --rf
-                echo "cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
-                cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
-                echo "evolinc-part-I.sh -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
-                evolinc-part-I.sh -c ./${sra_id}.combined.gtf -g ./$referencegenome -u ./$referenceannotation -r ./$referenceannotation -n $num_threads -o ./${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  echo "stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --rf"
+                  stringtie ${sra_id}_sorted.bam -o ${sra_id}.gtf -G $referenceannotation -p $num_threads --rf
+                  echo "cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}"
+                  cuffcompare ${sra_id}.gtf -r $referenceannotation -s $referencegenome -T -o ${sra_id}
+                  if [ "$evolinc_option" == "M" ]; then
+                  echo "evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA"
+                  evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA
+                  elif [ "$evolinc_option" == "MO" ]; then
+                  echo "evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc"
+                  evolinc-part-I.sh -c ${sra_id}.combined.gtf -g $referencegenome -u $referenceannotation -r $referenceannotation -n $num_threads -o ${sra_id}_lincRNA -b $blast_file -t $cage_file -x $known_linc
+                  fi
                 fi
             fi
       fi
