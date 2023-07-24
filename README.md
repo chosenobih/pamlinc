@@ -40,6 +40,10 @@ PAMLINC command line arguments and description
 | -d            | reads_mismatches (% reads mismatches to allow) #Required for TopHat2 aligner                                                                                                      |
 | -m            | activates RNA modification annotation option                                                                                                                                      |
 | -e            | activate lincRNA annotation option                                                                                                                                                |
+| -E            | run evolinc_i with mandatory files or both mandatory and optional files. Denoted as "M" or "MO", include double quotation on the command line                                     |
+| -T            | </path/to/transposable Elements file>                                                                                                                                             |
+| -C            | </path/to/CAGE RNA file>                                                                                                                                                          |
+| -D            | </path/to/known lincRNA file>                                                                                                                                                     |
 | -k            | feature_type #Feature type (Default is exon) #Required for featurecount                                                                                                           |
 | -r            | gene attribute (Default is gene_id) #Required for featurecount                                                                                                                    |
 | -n            | strandedness (Default is 0 (unstranded), 1 (stranded), 2 (reversely stranded) #Required for featurecount                                                                          |
@@ -48,26 +52,16 @@ PAMLINC command line arguments and description
 Required dependecies
 --------------------
 1. Linux-based computer, server or cluster.
-2. [Singularity v3.8 and above](https://docs.sylabs.io/guides/3.0/user-guide/quick_start.html)
-3. [Conda](https://conda.io/projects/conda/en/stable/user-guide/install/download.html)
+2. [Docker](https://docs.docker.com/engine/install/)
 
 Running PAMLINC
 -----------------------
-Download and install singularity and conda
 
 ```
-#clone the repo:  
-https://github.com/chosenobih/pamlinc.git
+#pull docker image:  
+docker pull ...
 ```  
-```
-#create a new conda environment for pamlinc and activate the environment
-conda create -n pamlinc_env python=2.7.16
-conda activate pamlinc_env
-```
-```
-#run setup_script.sh
-bash setup_script.sh
-```
+
 ```
 #download genome file for sorghum bicolor from CyVerse data store
 wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sbicolor.fa
@@ -94,7 +88,7 @@ wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1
 
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_PE -y "PE" -p 6 -w -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz -i index_folder
+docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_PE -y "PE" -p 6 -w -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -t -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz -i index_folder
 ```
 ```
 #download paired-end sample run output from google drive. Copy the link and paste it into your browser.
@@ -108,7 +102,7 @@ wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1
 ```
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SE -y "SE" -p 6 -w -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -t -u sample_1_SE.fastq.gz -i index_folder
+docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SE -y "SE" -p 6 -w -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -t -u sample_1_SE.fastq.gz -i index_folder
 ```
 ```
 #download single-end sample run output from google drive. Copy the link and paste it into your browser.
@@ -118,11 +112,11 @@ https://drive.google.com/drive/folders/1iLB7Gec9qB6Sv2TyFlHM_GG3HQ7wPWa9?usp=sha
 Running pamlinc in paired-end mode with an SRA-ID
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SRA-ID_PE -t -y "PE" -p 6 -w -S SRR18095197 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -i index_folder
+docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SRA-ID_PE -t -y "PE" -p 6 -w -S SRR18095197 -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -i index_folder
 ```
 
 Running pamlinc in single-end mode with an SRA-ID
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-bash pamlinc_main.sh -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SRA-ID_SE -t -y "SE" -p 6 -w -S SRR10376271 -l fr-secondstrand -q -e -m -k exon -r gene_id -n 0 -d 12 -i index_folder
+docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SRA-ID_SE -t -y "SE" -p 6 -w -S SRR10376271 -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -i index_folder
 ```
