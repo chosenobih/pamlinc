@@ -45,7 +45,6 @@ EOF
     exit 0
 }
 
-
 trimmomatic=0
 fastp=0
 star=0
@@ -56,7 +55,7 @@ HAMR=0
 evolinc_i=0
 transcript_abun_quant=0
 
-while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:c:f:r:n:htswxqeECDmy:" opt; do
+while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:c:f:r:n:E:htswxqeTCDmy:" opt; do
   case $opt in
     g)
     referencegenome=$OPTARG # Reference genome file
@@ -241,22 +240,22 @@ house_keeping()
       if [ "$HAMR" != 0 ]; then
           mv *_HAMR* "$pipeline_output"
           mv *.bai intermediate_files
-          mv *.sam intermediate_files
           rm "$gname".dict
-          if [ -e "./$gname.fa.fai" ]; then
-          rm "$gname".fa.fai
-          fi
       fi
       if [ "$tophat" != 0 ]; then
           mkdir mapped_files
           mv *_tophat* mapped_files
           mv mapped_files "$pipeline_output"
       fi
+      if [ -e "./$gname.fa.fai" ]; then
+          rm "$gname".fa.fai
+      fi
+      mv *.sam intermediate_files
       mv *.bam intermediate_files
       mv intermediate_files "$pipeline_output"
 
       echo "##############################"
-      echo "pipeline done"
+      echo "pipeline executed"
       echo "##############################"
       date
 }
@@ -273,16 +272,16 @@ tophat_mapping_transcript_quantification()
       echo "###########################################################################"    
             if [ "$evolinc_i" != 0 ]; then
                 if [ "$seq_type" == "PE" ]; then
-                echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
-                featureCounts -p -T $num_threads -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_merged.bam
+                echo "featureCounts -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
+                featureCounts -T $num_threads -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_merged.bam
                 elif [ "$seq_type" == "SE" ]; then
                 echo "featureCounts -T $num_threads -s $strandedness -a ./${filename}_lincRNA/${filename}.lincRNA.updated.gtf -o ${filename}_featurecount.txt ${filename}_sorted.bam"
                 featureCounts -T $num_threads -s $strandedness -a ./${filename}_lincRNA/${filename}.lincRNA.updated.gtf -o ${filename}_featurecount.txt ${filename}_sorted.bam
                 fi 
             elif [ "$evolinc_i" = 0 ]; then
                 if [ "$seq_type" == "PE" ]; then
-                echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
-                featureCounts -p -T $num_threads -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam
+                echo "featureCounts -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam"
+                featureCounts -T $num_threads -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_merged.bam
                 elif [ "$seq_type" == "SE" ]; then
                 echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_sorted.bam"
                 featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_sorted.bam
@@ -299,16 +298,16 @@ star_mapping_transcript_quantification()
       echo "###########################################################################"
             if [ "$evolinc_i" != 0 ]; then
                 if [ "$seq_type" == "PE" ]; then
-                echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam"
-                featureCounts -p -T $num_threads -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam
+                echo "featureCounts -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam"
+                featureCounts -T $num_threads -a ./${filename3}_lincRNA/${filename3}.lincRNA.updated.gtf -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam
                 elif [ "$seq_type" == "SE" ]; then
                 echo "featureCounts -T $num_threads -s $strandedness -a ./${filename}_lincRNA/${filename}.lincRNA.updated.gtf -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam"
                 featureCounts -T $num_threads -s $strandedness -a ./${filename}_lincRNA/${filename}.lincRNA.updated.gtf -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam
                 fi
             elif [ "$evolinc_i" = 0 ]; then
                 if [ "$seq_type" == "PE" ]; then
-                echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam"
-                featureCounts -p -T $num_threads -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam
+                echo "featureCounts -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam"
+                featureCounts -T $num_threads -a $referenceannotation -o ${filename3}_featurecount.txt ${filename3}_Aligned.sortedByCoord.out.bam
                 elif [ "$seq_type" == "SE" ]; then
                 echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam"
                 featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${filename}_featurecount.txt ${filename}_Aligned.sortedByCoord.out.bam
@@ -325,16 +324,16 @@ sra_id_transcript_quantification()
       echo "###########################################################################"    
             if [ "$evolinc_i" != 0 ]; then
                 if [ "$seq_type" == "PE" ]; then
-                echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
-                featureCounts -p -T $num_threads -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
+                echo "featureCounts -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
+                featureCounts -T $num_threads -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
                 elif [ "$seq_type" == "SE" ]; then
                 echo "featureCounts -T $num_threads -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam"
                 featureCounts -T $num_threads -s $strandedness -a ./${sra_id}_lincRNA/${sra_id}.lincRNA.updated.gtf -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam
                 fi
             elif [ "$evolinc_i" = 0 ]; then
                 if [ "$seq_type" == "PE" ]; then
-                echo "featureCounts -p -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
-                featureCounts -p -T $num_threads -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
+                echo "featureCounts -T $num_threads -t $feature_type -g $gene_attribute -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam"
+                featureCounts -T $num_threads -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_merged.bam
                 elif [ "$seq_type" == "SE" ]; then
                 echo "featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam"
                 featureCounts -T $num_threads -s $strandedness -a $referenceannotation -o ${sra_id}_featurecount.txt ${sra_id}_sorted.bam

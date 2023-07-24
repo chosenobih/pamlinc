@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y g++ \
 		libncurses5-dev \
 		libsodium-dev \
 		libmariadb-client-lgpl-dev \
+		libbz2-dev \
+		liblzma-dev \
 		libssl-dev \
 		zlib1g-dev \
 		libcurl4-openssl-dev \ 
@@ -23,8 +25,9 @@ RUN apt-get update && apt-get install -y g++ \
 		lbzip2 \
 		unzip \
 		bzip2 \
-		python \
+		python2.7 \
 		python2.7-dev \
+		python-pip \
 		python-matplotlib \
 		python-numpy \
        	python-pandas \
@@ -34,8 +37,11 @@ RUN apt-get update && apt-get install -y g++ \
 		bcftools \
 		curl
 
+RUN ldconfig
 RUN apt-get install -y locales && locale-gen en_US.UTF-8
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
+
+RUN pip2 install biopython==1.76
 
 # Downlaod and install conda
 RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
@@ -50,6 +56,7 @@ RUN conda config --add channels conda-forge && \
 
 # Conda packages
 RUN conda install fastp==0.23.4 -c bioconda -y && \
+	conda install biopython==1.76 -c anaconda -y && \
 	conda install star==2.7.10a -c bioconda -y && \
 	conda install trimmomatic==0.35 -c bioconda -y && \
 	conda install gffread==0.12.1 -c bioconda -y && \
@@ -64,8 +71,9 @@ RUN conda install fastp==0.23.4 -c bioconda -y && \
 	conda install numpy -y && \
 	conda install pandas -y && \
 	conda install last -c bioconda -y && \
-	conda install -c bioconda diamond && \
+	conda install diamond==0.9.10 -c bioconda && \
 	conda install matplotlib-base -c conda-forge -y
+
 
 # Required files
 WORKDIR /
@@ -83,16 +91,16 @@ WORKDIR /evolinc_docker
 
 # Cufflinks
 RUN wget -O- http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/cufflinks-2.2.1.Linux_x86_64.tar.gz | tar xzvf -
+
 # Transdecoder
 RUN wget -O- https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz | tar xzvf -
-# Diamond Blast
-#RUN wget http://github.com/bbuchfink/diamond/releases/download/v0.9.10/diamond-linux64.tar.gz && \
-#	tar xzf diamond-linux64.tar.gz
+
 # Bedtools
 RUN wget https://github.com/arq5x/bedtools2/archive/v2.25.0.tar.gz && \
 	tar xvf v2.25.0.tar.gz && \
 	cd bedtools2-2.25.0 && make && \
 	cd ..
+
 # Bedops tool
 RUN wget -O- https://github.com/bedops/bedops/releases/download/v2.4.16/bedops_linux_x86_64-v2.4.16.tar.bz2 | tar jxvf -
 # cpan
@@ -111,23 +119,21 @@ RUN apt-get -y install ca-certificates software-properties-common gnupg2 gnupg1 
 	Rscript -e 'BiocManager::install(c("Biostrings"));' && \
 	Rscript -e 'install.packages("getopt", dependencies = TRUE, repos="http://cran.rstudio.com/");'
 
+# Remove the existing symbolic link (if it exists)
+RUN rm /usr/bin/python
+
+# Create a symbolic link to make 'python' refer to 'python2.7'
+RUN ln -sf /usr/bin/python2.7 /usr/bin/python
+
+# Set Python 2.7 as the default python
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
+
 # Uniprot database
 ADD https://github.com/iPlantCollaborativeOpenSource/docker-builds/releases/download/evolinc-I/uniprot_sprot.dmnd.gz /evolinc_docker/
 RUN gzip -d /evolinc_docker/uniprot_sprot.dmnd.gz
 
 # rFAM database
 ADD https://de.cyverse.org/dl/d/12EF1A2F-B9FC-456D-8CD9-9F87197CACF2/rFAM_sequences.fasta /evolinc_docker/
-
-# Biopython
-RUN curl "https://bootstrap.pypa.io/pip/2.7/get-pip.py" -o "get-pip.py" && \
-	curl "https://files.pythonhosted.org/packages/27/79/8a850fe3496446ff0d584327ae44e7500daf6764ca1a382d2d02789accf7/pip-20.3.4-py2.py3-none-any.whl" -o "pip-20.3.4-py2.py3-none-any.whl" && \
-	curl "https://files.pythonhosted.org/packages/e1/b7/182161210a13158cd3ccc41ee19aadef54496b74f2817cc147006ec932b4/setuptools-44.1.1-py2.py3-none-any.whl" -o "setuptools-44.1.1-py2.py3-none-any.whl" && \
-	curl "https://files.pythonhosted.org/packages/27/d6/003e593296a85fd6ed616ed962795b2f87709c3eee2bca4f6d0fe55c6d00/wheel-0.37.1-py2.py3-none-any.whl" -o "wheel-0.37.1-py2.py3-none-any.whl" && \
-	python get-pip.py "pip-20.3.4-py2.py3-none-any.whl" "setuptools-44.1.1-py2.py3-none-any.whl" "wheel-0.37.1-py2.py3-none-any.whl" && \
-	curl "https://files.pythonhosted.org/packages/ff/f4/0ce39bebcbb0ff619426f2bbe86e60bc549ace318c5a9113ae480ab2adc7/biopython-1.76.tar.gz" -o "biopython-1.76.tar.gz" && \
-	tar xvf biopython-1.76.tar.gz && \
-	cd biopython-1.76 && python setup.py build && python setup.py install && \
-	cd ..
 
 # CPC2
 WORKDIR /evolinc_docker/CPC2-beta/libs/libsvm/
@@ -147,9 +153,9 @@ ENV HAMR_MODELS_PATH=/usr/bin/hamr_models
 
 # samtools & 
 RUN wget https://github.com/samtools/samtools/releases/download/1.10/samtools-1.10.tar.bz2 && \
-	tar -xvjf samtools-1.10.tar.bz2 
-WORKDIR samtools-1.10 
-RUN ./configure --prefix=/usr/bin && \
+	tar -xvjf samtools-1.10.tar.bz2 && \
+ 	cd samtools-1.10 && \
+	./configure --prefix=/usr/bin && \
 	make && \
 	make install
 WORKDIR /
@@ -158,8 +164,10 @@ WORKDIR /
 RUN wget https://github.com/samtools/htslib/releases/download/1.17/htslib-1.17.tar.bz2 && \
 	tar -xvjf htslib-1.17.tar.bz2 && \
 	cd htslib-1.17 && \
+	./configure --prefix=/usr/bin && \
 	make && \
-	cd ..
+	make install
+WORKDIR /
 
 #GATK
 RUN wget https://github.com/broadinstitute/gatk/releases/download/4.2.2.0/gatk-4.2.2.0.zip && \
@@ -174,7 +182,7 @@ ENV PATH /evolinc_docker/bedtools2-2.25.0/bin/:$PATH
 ENV PATH /evolinc_docker/bin/:$PATH
 ENV PATH /evolinc_docker/CPC2-beta/bin/:$PATH
 ENV PATH /evolinc_docker/:$PATH
-ENV PATH /htslib/:$PATH
+ENV PATH /usr/bin/:$PATH
 ENV PATH /HAMR/hamr.py:$PATH
 ENV PATH /HAMR/:$PATH
 
