@@ -22,7 +22,7 @@ PAMLINC command line arguments and description
 | -g            | reference genome fasta file                                                                                                                                                       |
 | -a            | reference genome annotation file                                                                                                                                                  |
 | -i            | reference genome index folder                                                                                                                                                     |
-| -l            | library type  (library type can be fr-unstranded, fr-firststrand or fr-secondstrand)                                                                                              |
+| -l            | library type  (library type can be fr-unstranded, fr-firststrand or fr-secondstrand). If you are not sure of the library type of your reads, you can infer it using salmon.       |
 | -1            | read_1                                                                                                                                                                            |
 | -2            | read_2                                                                                                                                                                            |
 | -u            | single_read                                                                                                                                                                       |
