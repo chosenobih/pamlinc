@@ -41,9 +41,9 @@ PAMLINC command line arguments and description
 | -F            | expected percentage of mismatches based solely on sequencing error, default=0.01                                                                                                  |
 | -G            | maximum p-value cutoff. All sites with a P-value greater than this value will be filtered out during HAMR analysis, default=1                                                     |
 | -H            | maximum FDR cutoff, default=0.05                                                                                                                                                  |
-| -I            | minimum % of reads that must match the reference nucleotide. All sites with reference read nucleotide proportion less than this value will be filtered out during HAMR analysis default=0.05   |
+| -I            | minimum % of reads that must match the reference nucleotide. All sites with reference read nucleotide proportion less than this value will be filtered out during HAMR analysis, default=0.05   |
 | -e            | activates evolinc_i for lincRNA identification                                                                                                                                    |
-| -E            | run evolinc_i with mandatory files or both mandatory and optional files. Denoted as "M" or "MO", include double quotation on the command line. Default = "M"                      |
+| -E            | run evolinc_i with mandatory files or both mandatory and optional files. Denoted as "M" or "MO", include double quotation on the command line, default="M"                        |
 | -T            | </path/to/transposable Elements file> (optional file for evolinc_i)                                                                                                               |
 | -C            | </path/to/CAGE RNA file> (optional file for evolinc_i)                                                                                                                            |
 | -D            | </path/to/known lincRNA file> (optional file for evolinc_i)                                                                                                                       |
