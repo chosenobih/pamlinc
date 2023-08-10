@@ -27,7 +27,7 @@ PAMLINC command line arguments and description
 | -u            | single_read                                                                                                                                                                       |
 | -o            | output directory                                                                                                                                                                  |
 | -S            | NCBI SRA-ID #upper case S                                                                                                                                                         |
-| -p            | number of threads  Default = 4                                                                                                                                                    |
+| -p            | number of threads, default=4                                                                                                                                                      |
 | -q            | activate transcript abundance quantification option                                                                                                                               |
 | -M            | select aligner of choice ("tophat2" or "star"), include double quotation on the command line. Must select tophat2 if you want to run HAMR                                         |
 | -t            | select adapter trimmer of choice ("trimmomatic" or "fastp"), include double quotation on the command line.                                                                        |
@@ -41,7 +41,7 @@ PAMLINC command line arguments and description
 | -F            | expected percentage of mismatches based solely on sequencing error, default=0.01                                                                                                  |
 | -G            | maximum p-value cutoff. All sites with a P-value greater than this value will be filtered out during HAMR analysis, default=1                                                     |
 | -H            | maximum FDR cutoff, default=0.05                                                                                                                                                  |
-| -I            | minimum % of reads that must match the reference nucleotide. All sites with reference read nucleotide proportion less than this value will be filtered out during HAMR analysis   |
+| -I            | minimum % of reads that must match the reference nucleotide. All sites with reference read nucleotide proportion less than this value will be filtered out during HAMR analysis default=0.05   |
 | -e            | activates evolinc_i for lincRNA identification                                                                                                                                    |
 | -E            | run evolinc_i with mandatory files or both mandatory and optional files. Denoted as "M" or "MO", include double quotation on the command line. Default = "M"                      |
 | -T            | </path/to/transposable Elements file> (optional file for evolinc_i)                                                                                                               |
