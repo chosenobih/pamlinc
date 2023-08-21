@@ -130,7 +130,8 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
 
 # Uniprot database
 ADD https://github.com/iPlantCollaborativeOpenSource/docker-builds/releases/download/evolinc-I/uniprot_sprot.dmnd.gz /evolinc_docker/
-RUN gzip -d /evolinc_docker/uniprot_sprot.dmnd.gz
+RUN gzip -d /evolinc_docker/uniprot_sprot.dmnd.gz && \
+	chmod +r uniprot_sprot.dmnd
 
 # rFAM database
 ADD https://de.cyverse.org/dl/d/12EF1A2F-B9FC-456D-8CD9-9F87197CACF2/rFAM_sequences.fasta /evolinc_docker/
@@ -152,13 +153,13 @@ RUN git clone https://github.com/chosenobih/HAMR.git && \
 ENV HAMR_MODELS_PATH=/usr/bin/hamr_models
 
 # samtools & 
-RUN wget https://github.com/samtools/samtools/releases/download/1.10/samtools-1.10.tar.bz2 && \
-	tar -xvjf samtools-1.10.tar.bz2 && \
- 	cd samtools-1.10 && \
-	./configure --prefix=/usr/bin && \
-	make && \
-	make install
-WORKDIR /
+#RUN wget https://github.com/samtools/samtools/releases/download/1.10/samtools-1.10.tar.bz2 && \
+#	tar -xvjf samtools-1.10.tar.bz2 && \
+# 	cd samtools-1.10 && \
+#	./configure --prefix=/usr/bin && \
+#	make && \
+#	make install
+#WORKDIR /
 
 #HTSLIB
 RUN wget https://github.com/samtools/htslib/releases/download/1.17/htslib-1.17.tar.bz2 && \

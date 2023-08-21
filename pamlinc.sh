@@ -23,18 +23,18 @@ cat <<'EOF'
   -q transcript abundance quantification
   -M select aligner of choice ("tophat2" or "star"), include double quotation on the command line. Must select tophat2 if you want to run HAMR
   -t select adapter trimmer of choice ("trimmomatic" or "fastp"), include double quotation on the command line.
-  -c sjdbOverhang #value is dependent on the read length of your fastq files. Value = (read length minus 1)
-  -f genomeSAindexNbases #default value is 14 but it should be scaled down for small genomes. Value = min(14, log2(GenomeLength)/2 - 1)
+  -c sjdbOverhang, value is dependent on the read length of your fastq files, value=(read length minus 1)
+  -f genomeSAindexNbases, default=14 but it should be scaled down for small genomes. Value=min(14, log2(GenomeLength)/2 - 1)
   -y type of reads (single end or paired end) #denoted as "SE" or "PE", include double quotation on command line
   -d reads_mismatches (% reads mismatches to allow. Required for tophat2)
-  -m HAMR
-  -A minimum base calling quality score. All low-quality bases will removed from HAMR analysis
-  -B minimum read coverage of a genomic position for it to be analyzed in HAMR
-  -F expected percentage of mismatches based solely on sequencing error
-  -G maximum p-value cutoff. All sites with P-value greater than this value will be filtered out during HAMR analysis
-  -H maximum FDR cutoff
-  -I minimum percentage of reads that must match the reference nucleotide. All sites with reference read nucleotide proportion less than this value will be filtered out during HAMR analysis
-  -e evolinc_i
+  -m activates HAMR for RNA modification annotation
+  -A minimum base calling quality score. All low-quality bases will be removed from HAMR analysis, default=30
+  -B minimum read coverage of a genomic position for it to be analyzed in HAMR, default=10 
+  -F expected percentage of mismatches based solely on sequencing error,default=0.01 
+  -G maximum p-value cutoff. All sites with P-value greater than this value will be filtered out during HAMR analysis, default=1 
+  -H maximum FDR cutoff, default=0.05 
+  -I minimum percentage of reads that must match the reference nucleotide. All sites with reference read nucleotide proportion less than this value will be filtered out during HAMR analysis, default=0.05
+  -e activates evolinc_i for lincRNA identification
   -E run evolinc_i with mandatory files or both mandatory and optional files. Denoted as "M" or "MO", include double quotation on the command line. Default is "M"
   -T </path/to/transposable Elements file> (optional file for evolinc_i)
   -C </path/to/CAGE RNA file> (optional file for evolinc_i)
@@ -42,6 +42,7 @@ cat <<'EOF'
   -k feature type #Feature type (Default is exon)
   -r gene attribute (Default is gene_id)
   -n strandedness (Default is 0 (unstranded), 1 (stranded), 2 (reversely stranded)
+  -h help message
 ################################################# END ########################################
 EOF
     exit 0
@@ -173,8 +174,9 @@ while getopts ":g:a:A:i:l:1:2:u:o:S:p:d:k:c:f:r:M:t:n:A:B:F:G:H:I:E:hqeTCDmy:" o
   esac
 done
 
-echo "pipeline starts"
+echo "Pipeline Starts"
 date
+start_time=$(date +%s)
 
 # Create the output directory
 if [ ! -d "$pipeline_output" ]; then
@@ -226,6 +228,11 @@ house_keeping()
             mv fastp_output intermediate_files
       fi
 
+      if [ "$sra_id" !=0 ]; then
+            mkdir SRA_raw_files
+            mv *$sra_id* SRA_raw_files && mv SRA_raw_files intermediate_files
+      fi
+
       if [ ! -z "$index_folder" ]; then
             if [ "$aligner" == "tophat2" ]; then
             mv *.bt2 "$index_folder"
@@ -244,8 +251,7 @@ house_keeping()
             fi
       fi
       if [ "$transcript_abun_quant" != 0 ]; then
-          mkdir featurecount && mv *_featurecount.txt* featurecount
-          mkdir transcript_abund_quant && mv featurecount transcript_abund_quant
+          mkdir transcript_abund_quant && mv *_featurecount.txt* transcript_abund_quant
           mv transcript_abund_quant "$pipeline_output"
       fi
       if [ "$evolinc_i" != 0 ]; then
@@ -258,22 +264,30 @@ house_keeping()
           mv *.bai intermediate_files
           rm "$gname".dict
       fi
-      if [ "$tophat" != 0 ]; then
+      if [ "$aligner" == "$tophat" != 0 ]; then
           mkdir mapped_files
           mv *_tophat* mapped_files
           mv mapped_files intermediate_files
+      elif [ "$aligner" == "$tophat" != 0 ]; then
+            mkdir mapped_files
+            mv 
+            mv mapped_files intermediate_files
       fi
       if [ -e "./$gname.fa.fai" ]; then
           rm "$gname".fa.fai
       fi
+
       mv *.sam intermediate_files
       mv *.bam intermediate_files
       mv intermediate_files "$pipeline_output"
 
       echo "##############################"
-      echo "pipeline executed"
+      echo "Pipeline Executed"
       echo "##############################"
       date
+      end_time=$(date +%s)
+      execution_time=$((end_time - start_time))
+      echo "Pipeline Executiion Time: $execution_time seconds"
 }
 	
 ##################################################################################################################
@@ -509,7 +523,7 @@ paired_fq_gz()
           fi
           if [ "$aligner" == "tophat2" ]; then
           echo "###################################"
-          echo "Running tophat2 in paired end mode"
+          echo "Running tophat2 in paired-end mode"
           echo "###################################"
                 if [ "$adapter_trimmer" == "trimmomatic" ]; then
                       tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq.gz,${filename3}_1U.fq.gz
@@ -553,7 +567,7 @@ paired_fq_gz()
           
           if [ "$aligner" == "star" ]; then
           echo "###################################"
-          echo "Running STAR in paired end mode"
+          echo "Running STAR in paired-end mode"
           echo "###################################"
               if [ "$adapter_trimmer" == "trimmomatic" ]; then
                     STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq.gz ${filename3}_2P.fq.gz
@@ -585,7 +599,7 @@ paired_fastq_gz()
 
           if [ "$aligner" == "tophat2" ]; then
           echo "###################################"
-          echo "Running tophat2 in paired end mode"
+          echo "Running tophat2 in paired-end mode"
           echo "###################################"
                 if [ "$adapter_trimmer" == "trimmomatic" ]; then
                       tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq.gz,${filename3}_1U.fastq.gz
@@ -629,7 +643,7 @@ paired_fastq_gz()
 
           if [ "$aligner" == "star" ]; then
           echo "###################################"
-          echo "Running STAR in paired end mode"
+          echo "Running STAR in paired-end mode"
           echo "###################################"
               if [ "$adapter_trimmer" == "trimmomatic" ]; then
                     STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fastq.gz ${filename3}_2P.fastq.gz
@@ -660,7 +674,7 @@ paired_fq()
 
           if [ "$aligner" == "tophat2" ]; then
           echo "###################################"
-          echo "Running tophat2 in paired end mode"
+          echo "Running tophat2 in paired-end mode"
           echo "###################################"
                 if [ "$adapter_trimmer" == "trimmomatic" ]; then
                       tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fq,${filename3}_1U.fq
@@ -704,7 +718,7 @@ paired_fq()
 
           if [ "$aligner" == "star" ]; then
           echo "###################################"
-          echo "Running STAR in paired end mode"
+          echo "Running STAR in paired-end mode"
           echo "###################################"
               if [ "$adapter_trimmer" == "trimmomatic" ]; then
                     STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fq ${filename3}_2P.fq
@@ -736,7 +750,7 @@ paired_fastq()
 
           if [ "$aligner" == "tophat2" ]; then
           echo "###################################"
-          echo "Running tophat2 in paired end mode"
+          echo "Running tophat2 in paired-end mode"
           echo "###################################"
                 if [ "$adapter_trimmer" == "trimmomatic" ]; then
                       tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename3}_fwd_tophat -G $referenceannotation $fbname ${filename3}_1P.fastq,${filename3}_1U.fastq
@@ -780,7 +794,7 @@ paired_fastq()
 
           if [ "$aligner" == "star" ]; then
           echo "###################################"
-          echo "Running STAR in paired end mode"
+          echo "Running STAR in paired-end mode"
           echo "###################################"
               if [ "$adapter_trimmer" == "trimmomatic" ]; then
                     STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${filename3}_ --readFilesIn ${filename3}_1P.fastq ${filename3}_2P.fastq
@@ -809,7 +823,7 @@ single_end()
 
           if [ "$aligner" == "tophat2" ]; then
               echo "###################################"
-              echo "Running tophat2 in single end mode"
+              echo "Running tophat2 in single-end mode"
               echo "###################################"
               echo "tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation $fbname ${filename}_trimmed.${extension}"
               tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${filename}_tophat -G $referenceannotation $fbname ${filename}_trimmed.${extension}
@@ -948,7 +962,7 @@ elif [ ! -z "$sra_id" ]; then
 
               if [ "$aligner" == "tophat2" ]; then
               echo "###################################"
-              echo "Running tophat2 in paired end mode"
+              echo "Running tophat2 in paired-end mode"
               echo "###################################"
                     if [ "$adapter_trimmer" == "trimmomatic" ]; then
                           tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_fwd_tophat -G $referenceannotation $fbname ${sra_id}_1P.fastq.gz,${sra_id}_1U.fastq.gz
@@ -992,7 +1006,7 @@ elif [ ! -z "$sra_id" ]; then
               
               if [ "$aligner" == "star" ]; then
                   echo "###################################"
-                  echo "Running STAR in paired end mode"
+                  echo "Running STAR in paired-end mode"
                   echo "###################################"
                     if [ "$adapter_trimmer" == "trimmomatic" ]; then
                           STAR --runMode alignReads --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --genomeDir ./star_index --outFileNamePrefix ${sra_id}_ --readFilesIn ${sra_id}_1P.fastq.gz ${sra_id}_2P.fastq.gz
@@ -1025,7 +1039,7 @@ elif [ ! -z "$sra_id" ]; then
 
                 if [ "$aligner" == "tophat2" ]; then
                 echo "###################################"
-                echo "Running tophat2 in single end mode"
+                echo "Running tophat2 in single-end mode"
                 echo "###################################"
                 tophat -p $num_threads --library-type $lib_type --read-mismatches $reads_mismatches --read-edit-dist $reads_mismatches --max-multihits 10 --b2-very-sensitive --transcriptome-max-hits 10 --no-coverage-search --output-dir ${sra_id}_tophat -G $referenceannotation $fbname ${sra_id}_trimmed.fastq.gz
                 
