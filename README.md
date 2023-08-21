@@ -62,7 +62,7 @@ Running PAMLINC
 
 ```
 #pull docker image for PAMLINC:  
-docker pull chosenobih/pamlinc:v0.3
+docker pull chosenobih/pamlinc:v0.4
 ```  
 
 ```
@@ -91,7 +91,7 @@ wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1
 
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc:v0.3 -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_PE -y "PE" -p 6 -t "trimmomatic" -M "tophat2" -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz -i index_folder
+docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc:v0.4 -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_PE -y "PE" -p 6 -t "trimmomatic" -M "tophat2" -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -1 sample_1_R1.fastq.gz -2 sample_1_R2.fastq.gz -i index_folder
 ```
 ```
 #download paired-end sample run output from google drive. Copy the link and paste it into your browser.
@@ -105,7 +105,7 @@ wget https://data.cyverse.org/dav-anon/iplant/home/chosen/pamlinc_files/sample_1
 ```
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc:v0.3 -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SE -y "SE" -p 6 -t "trimmomatic" -M "tophat2" -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -u sample_1_SE.fastq.gz -i index_folder
+docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc:v0.4 -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SE -y "SE" -p 6 -t "trimmomatic" -M "tophat2" -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -u sample_1_SE.fastq.gz -i index_folder
 ```
 ```
 #download single-end sample run output from google drive. Copy the link and paste it into your browser.
@@ -115,11 +115,11 @@ https://drive.google.com/drive/folders/1iLB7Gec9qB6Sv2TyFlHM_GG3HQ7wPWa9?usp=sha
 Running pamlinc in paired-end mode with an SRA-ID
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc:v0.3 -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SRA-ID_PE -y "PE" -p 6 -t "trimmomatic" -M "tophat2" -S SRR18095197 -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -i index_folder
+docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc:v0.4 -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SRA-ID_PE -y "PE" -p 6 -t "trimmomatic" -M "tophat2" -S SRR18095197 -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -i index_folder
 ```
 
 Running pamlinc in single-end mode with an SRA-ID
 ```
 #run pamlinc to annotate RNA modification, identify lincRNA and quantify transcript abundance with paired fastq.gz files. These options can be turned on or off using different flags.
-docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc:v0.3 -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SRA-ID_SE -y "SE" -p 6 -t "trimmomatic" -M "tophat2" -S SRR10376271 -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -i index_folder
+docker run --rm -v $(pwd):/working-dir -w /working-dir chosenobih/pamlinc:v0.4 -a sbicolor.gff3 -g sbicolor.fa -o pamlinc_result_SRA-ID_SE -y "SE" -p 6 -t "trimmomatic" -M "tophat2" -S SRR10376271 -l fr-secondstrand -q -e -E "M" -m -k exon -r gene_id -n 0 -d 12 -i index_folder
 ```
